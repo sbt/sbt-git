@@ -4,15 +4,13 @@ The `sbt-git-plugin` offers git command line features directly inside of SBT as 
 
 ## Installation ##
 
-Add the following to your `project/plugins/git.sbt` or `~/plugins/git.sbt` file:
+Add the following to your `project/plugins/git.sbt` or `~/.sbt/plugins/git.sbt` file:
     
     addSbtPlugin("com.typesafe", "sbt-git-plugin", "0.1")
 
 ### Using JGit ###
 
-If you do not have git installed and available on your path (e.g. you use windows), make sure your `project/plugins/git.sbt` or `~/plugins/git.sbt` file looks like this:
-
-    addSbtPlugin("com.typesafe", "sbt-git-plugin", "0.1")
+If you do not have git installed and available on your path (e.g. you use windows), make sure your `git.sbt` or `~/.sbt/git.sbt` file looks like this:
     
     useJGit
 

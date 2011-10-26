@@ -7,6 +7,7 @@ import Keys._
 object GitKeys {
   val gitRemoteRepo = SettingKey[String]("git-remote-repo", "The remote git repository assoicated with this project") 
   val gitRunner = TaskKey[GitRunner]("git-runner", "The mechanism used to run git in the current build.")
+  val gitRun = InputKey[Unit]("git", "Runs a git command directly from SBT.")
 }
 
 /** This plugin has all the basic 'git' functionality for other plugins. */
@@ -14,8 +15,13 @@ object GitPlugin extends Plugin {
   import GitKeys._
   // TODO - Should we embedd everywhere like this?
   override val settings = Seq(
-    gitRunner in ThisBuild := ConsoleGitRunner
-    // TODO - add an inputtask that can run git inside SBT.
+    gitRunner in ThisBuild := ConsoleGitRunner,
+    // Input task to run git commands directly.
+    gitRun in ThisBuild <<= inputTask { (argTask: TaskKey[Seq[String]]) =>
+      (argTask, baseDirectory, gitRunner in ThisBuild, streams) map { (args: Seq[String], dir: File, runner: GitRunner, s: TaskStreams) =>
+        runner(args:_*)(dir, s.log)
+      }
+    }
   )
   /** A Predefined setting to use JGit runner for git. */
   def useJGit = gitRunner in ThisBuild := JGitRunner

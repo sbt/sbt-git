@@ -20,7 +20,21 @@ This will enabled a java-only GIT solution that, while not supporting all the sa
 
 In an sbt prompt, simply enter any git command.  e.g.
 
-    > git diff
+    > git status
+    [info] /home/jsuereth/projects/personal/scala-arm$ git status
+    [info] # On branch master
+    [info] # Changes not staged for commit:
+    [info] #   (use "git add <file>..." to update what will be committed)
+    [info] #   (use "git checkout -- <file>..." to discard changes in working directory)
+    [info] #
+    [info] #	modified:   build.sbt
+    [info] #	modified:   project/plugins/project/Build.scala
+    [info] #
+    [info] # Untracked files:
+    [info] #   (use "git add <file>..." to include in what will be committed)
+    [info] #
+    [info] #	src/site/
+    [info] no changes added to commit (use "git add" and/or "git commit -a")
 
 
 ## Licensing ##

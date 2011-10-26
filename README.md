@@ -14,6 +14,15 @@ If you do not have git installed and available on your path (e.g. you use window
     
     useJGit
 
+Or you can type this into the prompt:
+
+    > set useJGit
+    [info] Reapplying settings...
+    [info] Set current project to scala-arm (in build file:...)
+    > session save
+    [info] Reapplying settings...
+    [info] Set current project to scala-arm (in build file:...)
+
 This will enabled a java-only GIT solution that, while not supporting all the same commands that can be run in the standard git command line, is good enough for most git activities.
 
 ## Usage ##

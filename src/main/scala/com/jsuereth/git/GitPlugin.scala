@@ -1,4 +1,4 @@
-package com.typesafe.git 
+package com.jsuereth.git
 
 import sbt._
 import Keys._

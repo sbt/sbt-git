@@ -6,7 +6,7 @@ import Keys._
 /** Keys relative to using git from SBT */
 object GitKeys {
   val gitRemoteRepo = SettingKey[String]("git-remote-repo", "The remote git repository associated with this project")
-  val gitBranch = SettingKey[String]("git-branch", "Target branch of a git operation")
+  val gitBranch = SettingKey[Option[String]]("git-branch", "Target branch of a git operation")
   val gitRunner = TaskKey[GitRunner]("git-runner", "The mechanism used to run git in the current build.")
   val gitRun = InputKey[Unit]("git", "Runs a git command directly from SBT.")
 }

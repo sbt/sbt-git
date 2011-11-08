@@ -10,7 +10,5 @@ version := "0.1"
 
 libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit.pgm" % "1.1.0.201109151100-r"
 
-publishTo <<= (version) { v =>
-  import Classpaths._
-  Option(if (v endsWith "SNAPSHOT") typesafeSnapshots else typesafeResolver)
-}
+publishTo := Some(Resolver.url("sbt-plugin-releases", new URL("http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-releases/"))(Resolver.ivyStylePatterns))
+

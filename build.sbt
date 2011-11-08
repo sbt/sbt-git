@@ -6,7 +6,7 @@ name := "sbt-git-plugin"
 
 organization := "com.jsuereth"
 
-version := "0.1"
+version := "0.2"
 
 libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit.pgm" % "1.1.0.201109151100-r"
 

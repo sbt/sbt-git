@@ -1,5 +1,8 @@
 sbtPlugin := true
 
+// This should be tied to sbtPlugin IMHO.
+publishMavenStyle := false
+
 resolvers += "jgit-repo" at "http://download.eclipse.org/jgit/maven"
 
 name := "sbt-git-plugin"

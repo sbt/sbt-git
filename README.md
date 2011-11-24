@@ -1,4 +1,4 @@
-u	# sbt-git-plugin #
+# sbt-git-plugin #
 
 The `sbt-git-plugin` offers git command line features directly inside of SBT as well as allowing other plugins to make use of git.
 
@@ -6,7 +6,7 @@ The `sbt-git-plugin` offers git command line features directly inside of SBT as 
 
 Add the following to your `project/plugins/git.sbt` or `~/.sbt/plugins/git.sbt` file:
     
-    resolvers += "scalasbt" at "http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-releases"
+    resolvers += Resolver.url("scalasbt", new URL("http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-releases"))(Resolver.ivyStylePatterns)
     
     resolvers += "jgit-repo" at "http://download.eclipse.org/jgit/maven"
     

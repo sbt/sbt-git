@@ -12,6 +12,10 @@ Add the following to your `project/plugins/git.sbt` or `~/.sbt/plugins/git.sbt` 
     
     addSbtPlugin("com.jsuereth", "sbt-git-plugin", "0.2")
 
+Note - in SBT 0.11.*, the above line is spelled:
+
+    addSbtPlugin("com.jsuereth" % "sbt-git-plugin" % "0.2")
+
 ### Using JGit ###
 
 If you do not have git installed and available on your path (e.g. you use windows), make sure your `git.sbt` or `~/.sbt/git.sbt` file looks like this:

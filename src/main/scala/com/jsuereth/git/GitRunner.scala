@@ -4,8 +4,10 @@ import sbt._
 
 /** An interface to run git commands. */
 trait GitRunner {
-  /** Akin to running 'git {args}' with a given working directory `cwd` and logger. */
-  def apply(args: String*)(cwd: File, log: Logger): Unit
+  /** Akin to running 'git {args}' with a given working directory `cwd` and logger.
+   * This will always return the resulting output string of the process.
+   */
+  def apply(args: String*)(cwd: File, log: Logger): String
   /** Commits all local changes and pushes the new commit to a remote repository. */
   def commitAndPush(msg: String, tag: Option[String] = None)(repo: File, log: Logger) {
     apply("add", ".")(repo, log)

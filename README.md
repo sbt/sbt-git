@@ -4,7 +4,7 @@ The `sbt-git-plugin` offers git command line features directly inside of SBT as 
 
 ## Installation ##
 
-Add the following to your `project/plugins/git.sbt` or `~/.sbt/plugins/git.sbt` file:
+Add the following to your `project/plugins.sbt` or `~/.sbt/plugins.sbt` file:
     
     resolvers += Resolver.url("scalasbt", new URL("http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-releases"))(Resolver.ivyStylePatterns)
     

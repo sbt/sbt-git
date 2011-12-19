@@ -17,7 +17,9 @@ object ConsoleGitRunner extends GitRunner {
       IO.createDirectory(cwd)
       val full = cmd ++ args
       log.info(cwd + "$ " + full.mkString(" "))
-      Process(full, cwd) !! log
+      val result = Process(full, cwd) !! log
+      log.info(result)
+      result
   }
   override def toString = "git"
 }

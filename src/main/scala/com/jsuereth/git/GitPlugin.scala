@@ -22,7 +22,6 @@ object GitPlugin extends Plugin {
       (argTask, baseDirectory, gitRunner in ThisBuild, streams) map { (args: Seq[String], dir: File, runner: GitRunner, s: TaskStreams) =>
         val result = runner(args:_*)(dir, s.log)
         // TODO - Best way to print to console?
-        println("git(" + (args mkString ", ") + ")")
         println(result)
       }
     }

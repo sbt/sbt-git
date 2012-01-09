@@ -13,12 +13,12 @@ object ConsoleGitRunner extends GitRunner {
 		isWindows && !isCygwin
 	}
   private lazy val cmd = if(isWindowsShell) Seq("cmd", "/c", "git") else Seq("git")
-  override def apply(args: String*)(cwd: File, log: Logger): String = {
+  override def apply(args: String*)(cwd: File, log: Logger = ConsoleLogger()): String = {
       IO.createDirectory(cwd)
       val full = cmd ++ args
-      log.info(cwd + "$ " + full.mkString(" "))
+      log.debug(cwd + "$ " + full.mkString(" "))
       val result = Process(full, cwd) !! log
-      log.info(result)
+      log.debug(result)
       result
   }
   override def toString = "git"

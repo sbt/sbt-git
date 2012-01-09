@@ -10,7 +10,7 @@ Add the following to your `project/plugins.sbt` or `~/.sbt/plugins.sbt` file:
     
     resolvers += "jgit-repo" at "http://download.eclipse.org/jgit/maven"
     
-    addSbtPlugin("com.jsuereth" % "sbt-git-plugin" % "0.2")
+    addSbtPlugin("com.jsuereth" % "sbt-git-plugin" % "0.4")
 
 ### Using JGit ###
 
@@ -34,20 +34,19 @@ This will enabled a java-only GIT solution that, while not supporting all the sa
 In an sbt prompt, simply enter any git command.  e.g.
 
     > git status
-    [info] /home/jsuereth/projects/personal/scala-arm$ git status
-    [info] # On branch master
-    [info] # Changes not staged for commit:
-    [info] #   (use "git add <file>..." to update what will be committed)
-    [info] #   (use "git checkout -- <file>..." to discard changes in working directory)
-    [info] #
-    [info] #	modified:   build.sbt
-    [info] #	modified:   project/plugins/project/Build.scala
-    [info] #
-    [info] # Untracked files:
-    [info] #   (use "git add <file>..." to include in what will be committed)
-    [info] #
-    [info] #	src/site/
-    [info] no changes added to commit (use "git add" and/or "git commit -a")
+    # On branch master
+    # Changes not staged for commit:
+    #   (use "git add <file>..." to update what will be committed)
+    #   (use "git checkout -- <file>..." to discard changes in working directory)
+    #
+    #	modified:   build.sbt
+    #	modified:   project/plugins/project/Build.scala
+    #
+    # Untracked files:
+    #   (use "git add <file>..." to include in what will be committed)
+    #
+    #	src/site/
+    no changes added to commit (use "git add" and/or "git commit -a")
 
 
 ## Licensing ##

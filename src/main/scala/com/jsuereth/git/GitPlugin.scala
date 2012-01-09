@@ -20,7 +20,10 @@ object GitPlugin extends Plugin {
     // Input task to run git commands directly.
     gitRun in ThisBuild <<= inputTask { (argTask: TaskKey[Seq[String]]) =>
       (argTask, baseDirectory, gitRunner in ThisBuild, streams) map { (args: Seq[String], dir: File, runner: GitRunner, s: TaskStreams) =>
-        runner(args:_*)(dir, s.log)
+        val result = runner(args:_*)(dir, s.log)
+        // TODO - Best way to print to console?
+        println("git(" + (args mkString ", ") + ")")
+        println(result)
       }
     }
   )

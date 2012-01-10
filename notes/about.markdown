@@ -1,0 +1,1 @@
+[sbt-git-plugin](http://github.com/sbt/sbt-git-plugin) is an SBT plugin that enabled cross-platform GIT support.  If you wish to use Git in another plugin, or run GIT directly against your own projects, this is the plugin for you.

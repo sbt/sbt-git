@@ -1,0 +1,3 @@
+* `GitRunner` now logs to debug (make git plugin less chatty)
+* `git` is now a command, not a task, closes #8
+* `GitRunner` returns a string containing the result of the `git` command, rather than just logging it.

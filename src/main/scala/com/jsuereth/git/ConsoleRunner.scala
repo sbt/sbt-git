@@ -14,12 +14,43 @@ object ConsoleGitRunner extends GitRunner {
 	}
   private lazy val cmd = if(isWindowsShell) Seq("cmd", "/c", "git") else Seq("git")
   override def apply(args: String*)(cwd: File, log: Logger = ConsoleLogger()): String = {
+      val gitLogger = new GitLogger(log)
       IO.createDirectory(cwd)
       val full = cmd ++ args
       log.debug(cwd + "$ " + full.mkString(" "))
-      val result = Process(full, cwd) !! log
-      log.debug(result)
-      result
+      val code = Process(full, cwd) ! gitLogger
+      gitLogger.flush(code)
   }
   override def toString = "git"
+  // reduce log level for git process
+  private class GitLogger(log: Logger) extends ProcessLogger {
+    import scala.collection.mutable.ListBuffer
+    import Level.{ Info, Warn, Error, Value => LogLevel }
+
+    private val msgs: ListBuffer[(LogLevel, String)] = new ListBuffer()
+
+    def info(s: => String): Unit =
+      synchronized { msgs += ((Info, s)) }
+
+    def error(s: => String): Unit =
+      synchronized { msgs += ((Error, s)) }
+
+    def buffer[T](f: => T): T = f
+
+    private def print(desiredLevel: LogLevel)(t: (LogLevel, String)): String = t match {
+      case (Info, msg) =>
+        log.info(msg)
+        msg
+      case (Error, msg) =>
+        log.log(desiredLevel, msg)
+        msg
+    }
+
+    def flush(exitCode: Int): String = {
+      val level = if (exitCode == 0) Info else Error // reduce log level Error -> Info if exitCode is zero
+      var result = msgs map print(level)
+      msgs.clear()
+      result.mkString("\n")
+    }
+  }
 }

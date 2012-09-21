@@ -1,4 +1,4 @@
-package com.jsuereth.git
+package com.typesafe.sbt.git
 
 import sbt._
 import Keys._
@@ -8,7 +8,7 @@ import org.eclipse.jgit.pgm.{Main=>JGit}
 object JGitRunner extends GitRunner {
   override def apply(args: String*)(cwd: File, log: Logger = ConsoleLogger()): String = {
     // TODO -  Can we just assume the .git repo? I hope so....
-    //JGit.main((Seq("--git-dir", cwd.getAbsolutePath + "/.git") ++ args).toArray)  
+    //JGit.main((Seq("--git-dir", cwd.getAbsolutePath + "/.git") ++ args).toArray)
     // Make a good ole fashioned classpath.
     getClass.getClassLoader match {
        case cl: java.net.URLClassLoader =>
@@ -21,13 +21,13 @@ object JGitRunner extends GitRunner {
            def value = mBuf.toString
          }
          Fork.java(None, Seq("-classpath", cp, "org.eclipse.jgit.pgm.Main") ++ args, Some(cwd), CustomOutput(output))
-         val result = output.value        
+         val result = output.value
          log.info(result)
          result
        case _ => sys.error("Could not find classpath for JGit!")
     }
 
   }
-  override def toString = "jgit"  
+  override def toString = "jgit"
 }
 

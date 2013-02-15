@@ -1,14 +1,12 @@
 sbtPlugin := true
 
-resolvers += "jgit-repo" at "http://download.eclipse.org/jgit/maven"
-
 name := "sbt-git"
 
 organization := "com.typesafe.sbt"
 
 version := "0.5.1-SNAPSHOT"
 
-libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit.pgm" % "1.1.0.201109151100-r"
+libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit.pgm" % "2.2.0.201212191850-r"
 
 publishMavenStyle := false
 

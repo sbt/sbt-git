@@ -2,14 +2,61 @@ package com.typesafe.sbt.git
 
 import sbt._
 import Keys._
-import org.eclipse.jgit.pgm.{Main=>JGit}
 
 /** A mechanism to run GIT using the pure java JGit implementation. */
 object JGitRunner extends GitRunner {
+
   override def apply(args: String*)(cwd: File, log: Logger = ConsoleLogger()): String = {
-    // TODO -  Can we just assume the .git repo? I hope so....
-    //JGit.main((Seq("--git-dir", cwd.getAbsolutePath + "/.git") ++ args).toArray)
-    // Make a good ole fashioned classpath.
+    args.headOption match {
+      case Some("push") => push(args drop 1)(cwd, log)
+      case Some("pull") => pull(args drop 1)(cwd, log)
+      case Some("clone") => clone(args drop 1)(cwd, log)
+      case _ =>  forkJGitMain(args:_*)(cwd, log)
+    }
+  }
+
+
+  /**
+       git clone [--template=<template_directory>]
+                 [-l] [-s] [--no-hardlinks] [-q] [-n] [--bare] [--mirror]
+                 [-o <name>] [-b <name>] [-u <upload-pack>] [--reference <repository>]
+                 [--separate-git-dir <git dir>]
+                 [--depth <depth>] [--[no-]single-branch]
+                 [--recursive|--recurse-submodules] [--] <repository>
+                 [<directory>]
+   */
+  private def clone(args: Seq[String])(cwd: File, log: Logger = ConsoleLogger()): String = {
+    // TODO - Parse args...
+    // TODO - this should not just work for ghpages plugin
+    val git = JGit(cwd)
+    args match {
+      case Seq("-b", branch, remote, ".") =>
+        // TODO - Logging?
+        JGit.clone(remote, cwd).checkoutBranch(branch);
+      case Seq(remote, ".") =>
+        JGit.clone(remote, cwd)
+      case _ => sys.error("Unable to run clone command: clone " + args.mkString(" "))
+    }
+    ""
+  }
+
+  private def pull(args: Seq[String])(cwd: File, log: Logger = ConsoleLogger()): String = {
+    val git = JGit(cwd)
+    // TODO - Parse options...
+    // TODO - Set logging/progress monitor.
+    git.porcelain.pull().call();
+    ""
+  }
+
+   private def push(args: Seq[String])(cwd: File, log: Logger = ConsoleLogger()): String = {
+    val git = JGit(cwd)
+    // TODO - Parse options...
+    // TODO - Set logging/progress monitor.
+    git.porcelain.push().call();
+    ""
+  }
+
+  private def forkJGitMain(args: String*)(cwd: File, log: Logger = ConsoleLogger()): String =
     getClass.getClassLoader match {
        case cl: java.net.URLClassLoader =>
          val cp = cl.getURLs map (_.getFile) mkString ":"
@@ -27,7 +74,6 @@ object JGitRunner extends GitRunner {
        case _ => sys.error("Could not find classpath for JGit!")
     }
 
-  }
   override def toString = "jgit"
 
 }

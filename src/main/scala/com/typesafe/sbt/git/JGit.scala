@@ -4,24 +4,32 @@ import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.api.{Git => PGit}
 import java.io.File
+import org.eclipse.jgit.lib.ObjectId
+import org.eclipse.jgit.lib.Ref
 
-
+// TODO - This class needs a bit more work, but at least it lets us use porcelain and wrap some higher-level
+// stuff on top of JGit, as needed for our plugin.
 class JGit(val repo: Repository) {
   val porcelain = new PGit(repo)
 
 
   def create(): Unit = repo.create()
 
-  def branch = repo.getBranch
+  def branch: String = repo.getBranch
 
-  def listBranches = {
+  def branches: Seq[Ref] = {
     import collection.JavaConverters._
     porcelain.branchList.call.asScala
   }
 
+  def tags: Seq[Ref] = {
+    import collection.JavaConverters._
+    porcelain.tagList.call().asScala
+  }
+
   def checkoutBranch(branch: String): Unit = {
     // First, if remote branch exists, we auto-track it.
-    val exists = listBranches exists (_.getName == ("refs/heads/" + branch))
+    val exists = branches exists (_.getName == ("refs/heads/" + branch))
     if(exists)  porcelain.checkout.setName(branch).call()
     else {
       // TODO - find upstream...
@@ -31,6 +39,23 @@ class JGit(val repo: Repository) {
                 .setUpstreamMode(SetupUpstreamMode.SET_UPSTREAM)
                 .setStartPoint(upstream).call()
     }
+  }
+
+  def headCommit: Option[ObjectId] =
+    Option(repo.resolve("HEAD"))
+
+  def headCommitSha: Option[String] =
+    headCommit map (_.name)
+
+  def currentTags: Seq[String] = {
+    for {
+      hash <- headCommit.toSeq
+      tag <- tags
+      taghash = tag.getObjectId.getName
+      if taghash == hash
+      ref = tag.getName
+      if ref startsWith "refs/tags/"
+    } yield ref drop 10
   }
 }
 

@@ -16,6 +16,16 @@ object JGitRunner extends GitRunner {
   }
 
 
+  override def headCommit(cwd: File, log: Logger) = {
+    val git = JGit(cwd)
+    git.headCommitSha getOrElse sys.error("Could not find a head commit in " + cwd)
+  }
+
+  override def currentTopTagOrNone(cwd: File, log: Logger): Option[String] = {
+    val git = JGit(cwd)
+    git.currentTags.headOption
+  }
+
   /**
        git clone [--template=<template_directory>]
                  [-l] [-s] [--no-hardlinks] [-q] [-n] [--bare] [--mirror]

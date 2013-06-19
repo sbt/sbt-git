@@ -26,6 +26,32 @@ object SbtGit extends Plugin {
 
     // <arg> is the suggestion printed for tab completion on an argument
     val command: Command = Command.args("git", "<args>")(action)
+
+    @scala.annotation.tailrec
+    private def isGitRepo(dir: File): Boolean = {
+      if (dir.listFiles().map(_.getName).contains(".git")) {
+        true
+      } else {
+        val parent = dir.getParentFile
+        if (parent == null) {
+          false
+        } else {
+          isGitRepo(parent)
+        }
+      }
+    }
+
+    val prompt: State => String = { state =>
+      val extracted = Project.extract(state)
+      import extracted._
+      val (state1, runner) = runTask(GitKeys.gitRunner, state)
+      val dir = extracted.get(baseDirectory)
+      if (isGitRepo(dir)) {
+        runner.prompt(state1)(dir, state1.log)
+      } else {
+        "> "
+      }
+    }
   }
 
   import GitKeys._
@@ -33,8 +59,9 @@ object SbtGit extends Plugin {
   override val settings = Seq(
     gitRunner in ThisBuild := ConsoleGitRunner,
     // Input task to run git commands directly.
-    commands += GitCommand.command
-  )
+    commands += GitCommand.command,
+    shellPrompt := GitCommand.prompt
+    )
   /** A Predefined setting to use JGit runner for git. */
   def useJGit = gitRunner in ThisBuild := JGitRunner
 
@@ -45,11 +72,3 @@ object SbtGit extends Plugin {
     val runner = GitKeys.gitRunner in ThisBuild
   }
 }
-
-
-
-
-
-
-
-

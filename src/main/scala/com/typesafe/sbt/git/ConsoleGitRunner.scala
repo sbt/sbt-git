@@ -13,14 +13,16 @@ object ConsoleGitRunner extends GitRunner {
 		isWindows && !isCygwin
 	}
   private lazy val cmd = if(isWindowsShell) Seq("cmd", "/c", "git") else Seq("git")
+
   override def apply(args: String*)(cwd: File, log: Logger = ConsoleLogger()): String = {
-      val gitLogger = new GitLogger(log)
-      IO.createDirectory(cwd)
-      val full = cmd ++ args
-      log.debug(cwd + "$ " + full.mkString(" "))
-      val code = Process(full, cwd) ! gitLogger
-      gitLogger.flush(code)
+    val gitLogger = new GitLogger(log)
+    IO.createDirectory(cwd)
+    val full = cmd ++ args
+    log.debug(cwd + "$ " + full.mkString(" "))
+    val code = Process(full, cwd) ! gitLogger
+    gitLogger.flush(code)
   }
+
   override def toString = "git"
   // reduce log level for git process
   private class GitLogger(log: Logger) extends ProcessLogger {
@@ -53,4 +55,5 @@ object ConsoleGitRunner extends GitRunner {
       result.mkString("\n")
     }
   }
+
 }

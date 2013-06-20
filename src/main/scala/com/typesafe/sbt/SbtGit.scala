@@ -4,6 +4,7 @@ import sbt._
 import Keys._
 import git.{ ConsoleGitRunner, GitRunner, JGitRunner, NullLogger }
 import scala.util.logging.ConsoleLogger
+import com.typesafe.sbt.git.GitRunner
 
 /** This plugin has all the basic 'git' functionality for other plugins. */
 object SbtGit extends Plugin {
@@ -16,7 +17,6 @@ object SbtGit extends Plugin {
     val gitHeadCommit = SettingKey[String]("git-head-commit", "The commit sha for the top commit of this project.")
     val gitCurrentBranch = SettingKey[String]("git-current-branch", "The current branch for this project.")
     val gitTopTag = SettingKey[Option[String]]("git-top-tag", "The latest tag associated with this commit.")
-    val gitShowCurrentBranch = TaskKey[Boolean]("git-show-current-branch", "Show current branch at shell prompt.")
   }
 
   object GitCommand {
@@ -36,28 +36,25 @@ object SbtGit extends Plugin {
 
     @scala.annotation.tailrec
     private def isGitRepo(dir: File): Boolean = {
-      if (dir.listFiles().map(_.getName).contains(".git")) {
-        true
-      } else {
+      if (dir.listFiles().map(_.getName).contains(".git")) true
+      else {
         val parent = dir.getParentFile
-        if (parent == null) {
-          false
-        } else {
-          isGitRepo(parent)
-        }
+        if (parent == null) false
+        else isGitRepo(parent)
       }
     }
 
     val prompt: State => String = { state =>
       val extracted = Project.extract(state)
       import extracted._
-      val (state1, showBranch) = runTask(GitKeys.gitShowCurrentBranch, state)
-      val (state2, runner) = runTask(GitKeys.gitRunner, state1)
-      val dir = extracted.get(baseDirectory)
-      if (showBranch && isGitRepo(dir)) {
-        runner.prompt(state1)(dir, state2.log)
+      val runner = extracted get GitKeys.gitRunnerSetting
+      val dir = extracted get baseDirectory
+      val name = extracted get Keys.name
+      if (isGitRepo(dir)) {
+        val branch = runner.currentBranchOrNone(dir, NullLogger) getOrElse ""
+        name + "(" + branch + ")> "
       } else {
-        "> "
+        name + "> "
       }
     }
   }
@@ -75,7 +72,6 @@ object SbtGit extends Plugin {
     gitTopTag in ThisBuild <<= (baseDirectory, gitRunnerSetting) apply { (bd, git) =>
       git.currentTopTagOrNone(bd, NullLogger)
     },
-    gitShowCurrentBranch in ThisBuild := false,
     gitCurrentBranch in ThisBuild <<= (baseDirectory, gitRunnerSetting) apply { (bd, git) =>
       git.currentBranchOrNone(bd, NullLogger).getOrElse("")
     }
@@ -89,16 +85,14 @@ object SbtGit extends Plugin {
   /** A Predefined setting to use JGit runner for git. */
   def useJGit: Setting[_] = gitRunnerSetting in ThisBuild := JGitRunner
 
-  def showCurrentGitBranch = gitShowCurrentBranch in ThisBuild := true
-
-  def hideCurrentGitBranch = gitShowCurrentBranch in ThisBuild := false
+  def showCurrentGitBranch: Setting[_] =
+    shellPrompt := GitCommand.prompt
 
   /** A holder of keys for simple config. */
   object git {
     val remoteRepo = GitKeys.gitRemoteRepo
     val branch = GitKeys.gitBranch
     val runner = GitKeys.gitRunner in ThisBuild
-    val showCurrentBranch = GitKeys.gitShowCurrentBranch in ThisBuild
     val gitHeadCommit = GitKeys.gitHeadCommit in ThisBuild
     val gitTopTag = GitKeys.gitTopTag in ThisBuild
     val gitCurrentBranch = GitKeys.gitCurrentBranch in ThisBuild

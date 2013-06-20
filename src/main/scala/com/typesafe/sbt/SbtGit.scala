@@ -10,6 +10,7 @@ object SbtGit extends Plugin {
     val gitRemoteRepo = SettingKey[String]("git-remote-repo", "The remote git repository associated with this project")
     val gitBranch = SettingKey[Option[String]]("git-branch", "Target branch of a git operation")
     val gitRunner = TaskKey[GitRunner]("git-runner", "The mechanism used to run git in the current build.")
+    val gitShowCurrentBranch = TaskKey[Boolean]("git-show-current-branch", "Show current branch at shell prompt.")
   }
 
   object GitCommand {
@@ -44,10 +45,11 @@ object SbtGit extends Plugin {
     val prompt: State => String = { state =>
       val extracted = Project.extract(state)
       import extracted._
-      val (state1, runner) = runTask(GitKeys.gitRunner, state)
+      val (state1, showBranch) = runTask(GitKeys.gitShowCurrentBranch, state)
+      val (state2, runner) = runTask(GitKeys.gitRunner, state1)
       val dir = extracted.get(baseDirectory)
-      if (isGitRepo(dir)) {
-        runner.prompt(state1)(dir, state1.log)
+      if (showBranch && isGitRepo(dir)) {
+        runner.prompt(state1)(dir, state2.log)
       } else {
         "> "
       }
@@ -59,16 +61,22 @@ object SbtGit extends Plugin {
   override val settings = Seq(
     gitRunner in ThisBuild := ConsoleGitRunner,
     // Input task to run git commands directly.
-    commands += GitCommand.command,
-    shellPrompt := GitCommand.prompt
+    commands += GitCommand.command ,
+    shellPrompt := GitCommand.prompt,
+    gitShowCurrentBranch in ThisBuild := false
     )
   /** A Predefined setting to use JGit runner for git. */
   def useJGit = gitRunner in ThisBuild := JGitRunner
+
+  def showCurrentGitBranch = gitShowCurrentBranch in ThisBuild := true
+
+  def hideCurrentGitBranch = gitShowCurrentBranch in ThisBuild := false
 
   /** A holder of keys for simple config. */
   object git {
     val remoteRepo = GitKeys.gitRemoteRepo
     val branch = GitKeys.gitBranch
     val runner = GitKeys.gitRunner in ThisBuild
+    val showCurrentBranch = GitKeys.gitShowCurrentBranch in ThisBuild
   }
 }

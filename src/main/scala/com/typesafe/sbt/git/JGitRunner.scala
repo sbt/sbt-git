@@ -29,5 +29,6 @@ object JGitRunner extends GitRunner {
 
   }
   override def toString = "jgit"
+
 }
 

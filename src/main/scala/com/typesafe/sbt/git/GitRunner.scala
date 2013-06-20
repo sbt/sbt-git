@@ -26,4 +26,7 @@ trait GitRunner {
         case None => apply("clone", remote, ".")(cwd, log)
         case Some(b) => apply("clone", "-b", b, remote, ".")(cwd, log)
       }
+
+  def prompt(state: State)(cwd: File, log: Logger): String =
+    apply("branch")(cwd, log).split(System.lineSeparator()).find{_.head == '*'}.map{_.drop(2)}.getOrElse("") + "> "
 }

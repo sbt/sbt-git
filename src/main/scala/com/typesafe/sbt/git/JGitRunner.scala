@@ -26,6 +26,11 @@ object JGitRunner extends GitRunner {
     git.currentTags.headOption
   }
 
+
+  override def currentBranchOrNone(cwd: File, log: Logger): Option[String] = {
+    val git = JGit(cwd)
+    Option(git.branch)
+  }
   /**
        git clone [--template=<template_directory>]
                  [-l] [-s] [--no-hardlinks] [-q] [-n] [--bare] [--mirror]

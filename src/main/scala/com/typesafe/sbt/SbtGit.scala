@@ -14,6 +14,7 @@ object SbtGit extends Plugin {
     @deprecated
     val gitRunner = TaskKey[GitRunner]("git-runner-task", "The mechanism used to run git in the current build.")
     val gitHeadCommit = SettingKey[String]("git-head-commit", "The commit sha for the top commit of this project.")
+    val gitCurrentBranch = SettingKey[String]("git-current-branch", "The current branch for this project.")
     val gitTopTag = SettingKey[Option[String]]("git-top-tag", "The latest tag associated with this commit.")
     val gitShowCurrentBranch = TaskKey[Boolean]("git-show-current-branch", "Show current branch at shell prompt.")
   }
@@ -73,14 +74,18 @@ object SbtGit extends Plugin {
     },
     gitTopTag in ThisBuild <<= (baseDirectory, gitRunnerSetting) apply { (bd, git) =>
       git.currentTopTagOrNone(bd, NullLogger)
+    },
+    gitShowCurrentBranch in ThisBuild := false,
+    gitCurrentBranch in ThisBuild <<= (baseDirectory, gitRunnerSetting) apply { (bd, git) =>
+      git.currentBranchOrNone(bd, NullLogger).getOrElse("")
     }
   )
   override val settings = Seq(
     // Input task to run git commands directly.
     commands += GitCommand.command ,
-    shellPrompt := GitCommand.prompt,
-    gitShowCurrentBranch in ThisBuild := false
-    )
+    shellPrompt := GitCommand.prompt
+
+  )
   /** A Predefined setting to use JGit runner for git. */
   def useJGit: Setting[_] = gitRunnerSetting in ThisBuild := JGitRunner
 
@@ -96,5 +101,6 @@ object SbtGit extends Plugin {
     val showCurrentBranch = GitKeys.gitShowCurrentBranch in ThisBuild
     val gitHeadCommit = GitKeys.gitHeadCommit in ThisBuild
     val gitTopTag = GitKeys.gitTopTag in ThisBuild
+    val gitCurrentBranch = GitKeys.gitCurrentBranch in ThisBuild
   }
 }

@@ -52,6 +52,9 @@ trait GitRunner {
     for(tagString <- tag) apply("tag", tagString)(repo, log)
     push(repo, log)
   }
+  def currentBranchOrNone(cwd: File, log: Logger): Option[String] = {
+    apply("branch")(cwd, log).split(System.lineSeparator).find{_.head == '*'}.map{_.drop(2)}
+  }
   /** Grabs the head commit from git. */
   def headCommit(cwd: File, log: Logger) = apply("rev-parse", "HEAD")(cwd, log)
   /** Returns the most recently created tag name, if it exists, wrapped in an option. */
@@ -76,5 +79,5 @@ trait GitRunner {
       }
 
   def prompt(state: State)(cwd: File, log: Logger): String =
-    apply("branch")(cwd, log).split(IO.Newline).find{_.head == '*'}.map{_.drop(2)}.getOrElse("") + "> "
+    currentBranchOrNone(cwd,log).getOrElse("") + "> "
 }

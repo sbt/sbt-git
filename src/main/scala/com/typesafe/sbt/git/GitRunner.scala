@@ -28,5 +28,5 @@ trait GitRunner {
       }
 
   def prompt(state: State)(cwd: File, log: Logger): String =
-    apply("branch")(cwd, log).split(System.lineSeparator()).find{_.head == '*'}.map{_.drop(2)}.getOrElse("") + "> "
+    apply("branch")(cwd, log).split(IO.Newline).find{_.head == '*'}.map{_.drop(2)}.getOrElse("") + "> "
 }

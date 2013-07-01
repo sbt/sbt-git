@@ -21,9 +21,9 @@ object JGitRunner extends GitRunner {
     git.headCommitSha getOrElse sys.error("Could not find a head commit in " + cwd)
   }
 
-  override def currentTopTagOrNone(cwd: File, log: Logger): Option[String] = {
+  override def currentTags(cwd: File, log: Logger): Seq[String] = {
     val git = JGit(cwd)
-    git.currentTags.headOption
+    git.currentTags
   }
 
 

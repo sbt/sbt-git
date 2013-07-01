@@ -9,7 +9,7 @@ import org.eclipse.jgit.lib.Ref
 
 // TODO - This class needs a bit more work, but at least it lets us use porcelain and wrap some higher-level
 // stuff on top of JGit, as needed for our plugin.
-class JGit(val repo: Repository) {
+final class JGit(val repo: Repository) {
   val porcelain = new PGit(repo)
 
 
@@ -48,14 +48,28 @@ class JGit(val repo: Repository) {
     headCommit map (_.name)
 
   def currentTags: Seq[String] = {
+    import collection.JavaConverters._
     for {
-      hash <- headCommit.toSeq
-      tag <- tags
-      taghash = tag.getObjectId.getName
+      hash <- headCommit.map(_.name).toSeq
+      unpeeledTag <- tags
+      taghash = tagHash(unpeeledTag)
       if taghash == hash
-      ref = tag.getName
+      ref = unpeeledTag.getName
       if ref startsWith "refs/tags/"
     } yield ref drop 10
+  }
+
+
+  def tagHash(tag: Ref) = {
+    // Annotated (signed) and plain tags work differently,
+    // plain ones have the null PeeledObjectId
+    val peeled = repo.peel(tag)
+    val id =
+      if (peeled.getPeeledObjectId ne null)
+        peeled.getPeeledObjectId
+      else
+        peeled.getObjectId
+    id.getName
   }
 }
 

@@ -10,7 +10,7 @@ Add the following to your `project/plugins.sbt` or `~/.sbt/plugins/plugins.sbt` 
 
     resolvers += "jgit-repo" at "http://download.eclipse.org/jgit/maven"
 
-    addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.6.0")
+    addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.6.1")
 
 
 ### Using JGit ###

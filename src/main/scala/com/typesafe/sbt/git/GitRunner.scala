@@ -15,22 +15,6 @@ trait GitRunner {
     for(tagString <- tag) apply("tag", tagString)(repo, log)
     push(repo, log)
   }
-  def currentBranchOrNone(cwd: File, log: Logger): Option[String] = {
-    apply("branch")(cwd, log).split(System.lineSeparator).find{_.head == '*'}.map{_.drop(2)}
-  }
-  /** Grabs the head commit from git. */
-  def headCommit(cwd: File, log: Logger): String =
-    apply("rev-parse", "HEAD")(cwd, log)
-  /** Returns the most recently created tag name, if it exists, wrapped in an option. */
-  def currentTags(cwd: File, log: Logger): Seq[String] = {
-    val sha = headCommit(cwd, log)
-    // TODO - This seems prone to failure and risky.  JGit is a better option.
-    // Also we should parse this a bit better.
-    try Seq(apply("describe", "--tags", "--exact-match", sha)(cwd, log))
-    catch {
-      case e: Exception => Nil
-    }
-  }
   /** Pushes local commits to the remote branch. */
   def push(cwd: File, log: Logger) = apply("push")(cwd, log)
   /** Pulls remote changes into the local branch. */
@@ -42,7 +26,4 @@ trait GitRunner {
         case None => apply("clone", remote, ".")(cwd, log)
         case Some(b) => apply("clone", "-b", b, remote, ".")(cwd, log)
       }
-
-  def prompt(state: State)(cwd: File, log: Logger): String =
-    currentBranchOrNone(cwd,log).getOrElse("") + "> "
 }

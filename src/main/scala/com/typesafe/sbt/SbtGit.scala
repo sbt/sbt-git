@@ -5,33 +5,42 @@ import Keys._
 import git.{ ConsoleGitRunner, GitRunner, JGitRunner, NullLogger }
 import scala.util.logging.ConsoleLogger
 import com.typesafe.sbt.git.GitRunner
+import com.typesafe.sbt.git.ReadableGit
+import com.typesafe.sbt.git.DefaultReadableGit
 
 /** This plugin has all the basic 'git' functionality for other plugins. */
 object SbtGit extends Plugin {
   object GitKeys {
-    val gitRemoteRepo = SettingKey[String]("git-remote-repo", "The remote git repository associated with this project")
+    // Read-only git settings and values for use in other build settings.
+    // Note: These are all grabbed using jgit currently.
+    val gitReader = SettingKey[ReadableGit]("git-reader", "This gives us a read-only view of the git repository.")
     val gitBranch = SettingKey[Option[String]]("git-branch", "Target branch of a git operation")
-    val gitRunnerSetting = SettingKey[GitRunner]("git-runner", "The mechanism used to run git in the current build.")
-    @deprecated
-    val gitRunner = TaskKey[GitRunner]("git-runner-task", "The mechanism used to run git in the current build.")
-    val gitHeadCommit = SettingKey[String]("git-head-commit", "The commit sha for the top commit of this project.")
     val gitCurrentBranch = SettingKey[String]("git-current-branch", "The current branch for this project.")
     val gitCurrentTags = SettingKey[Seq[String]]("git-current-tags", "The tags associated with this commit.")
+    val gitHeadCommit = SettingKey[Option[String]]("git-head-commit", "The commit sha for the top commit of this project.")
+
+    // A Mechanism to run Git directly.
+    val gitRunner = TaskKey[GitRunner]("git-runner", "The mechanism used to run git in the current build.")
+
+    // Keys associated with setting a version number.
     val gitTagToVersionNumber = SettingKey[String => Option[String]]("git-tag-to-version-number", "Converts a git tag string to a version number.")
     val baseVersion = SettingKey[String]("base-version", "The base version number which we will append the git version to.")
     val versionProperty = SettingKey[String]("version-property", "The system property that can be used to override the version number.  Defaults to `project.version`.")
+
+    // The remote repository we're using.
+    val gitRemoteRepo = SettingKey[String]("git-remote-repo", "The remote git repository associated with this project")
   }
 
   object GitCommand {
     val action: (State, Seq[String]) => State = { (state, args) =>
       val extracted = Project.extract(state)
       import extracted._
-      val runner = extracted get GitKeys.gitRunnerSetting
+      val (state2, runner) = extracted.runTask(GitKeys.gitRunner, state)
       val dir = extracted.get(baseDirectory)
-      val result = runner(args:_*)(dir, state.log)
+      val result = runner(args:_*)(dir, state2.log)
       // TODO - Best way to print to console?
       println(result)
-      state
+      state2
     }
 
     // <arg> is the suggestion printed for tab completion on an argument
@@ -50,11 +59,11 @@ object SbtGit extends Plugin {
     val prompt: State => String = { state =>
       val extracted = Project.extract(state)
       import extracted._
-      val runner = extracted get GitKeys.gitRunnerSetting
+      val reader = extracted get GitKeys.gitReader
       val dir = extracted get baseDirectory
       val name = extracted get Keys.name
       if (isGitRepo(dir)) {
-        val branch = runner.currentBranchOrNone(dir, NullLogger) getOrElse ""
+        val branch = reader.withGit(_.branch)
         name + "(" + branch + ")> "
       } else {
         name + "> "
@@ -66,32 +75,41 @@ object SbtGit extends Plugin {
   // Use SBT 0.12's features for advantage!
   // We store our global build settings just once.
   override val projectSettings = Seq(
-    gitRunnerSetting in ThisBuild := ConsoleGitRunner,
-    gitRunner in ThisBuild <<= gitRunnerSetting map identity,
-    gitHeadCommit in ThisBuild <<= (baseDirectory, gitRunnerSetting) apply { (bd, git) =>
+    gitReader in ThisBuild <<= (baseDirectory in ThisBuild) apply (new DefaultReadableGit(_)),
+    gitRunner in ThisBuild := ConsoleGitRunner,
+    gitHeadCommit in ThisBuild <<= (gitReader in ThisBuild) apply { (reader) =>
       // TODO - Figure out logging!
-      git.headCommit(bd, NullLogger)
+      reader.withGit(_.headCommitSha)
     },
-    gitCurrentTags in ThisBuild <<= (baseDirectory, gitRunnerSetting) apply { (bd, git) =>
-      git.currentTags(bd, NullLogger)
+    gitCurrentTags in ThisBuild <<= (gitReader in ThisBuild) apply { (reader) =>
+      reader.withGit(_.currentTags)
     },
-    gitCurrentBranch in ThisBuild <<= (baseDirectory, gitRunnerSetting) apply { (bd, git) =>
-      git.currentBranchOrNone(bd, NullLogger).getOrElse("")
+    gitCurrentBranch in ThisBuild <<= (gitReader in ThisBuild) apply { (reader) =>
+      reader.withGit(_.branch)
     }
   )
   override val settings = Seq(
     // Input task to run git commands directly.
     commands += GitCommand.command ,
     shellPrompt := GitCommand.prompt
-
   )
   /** A Predefined setting to use JGit runner for git. */
-  def useJGit: Setting[_] = gitRunnerSetting in ThisBuild := JGitRunner
+  def useJGit: Setting[_] = gitRunner in ThisBuild := JGitRunner
 
+  /** Adapts the project prompt to show the current project name *and* the current git branch. */
   def showCurrentGitBranch: Setting[_] =
     shellPrompt := GitCommand.prompt
 
 
+  /** Uses git to control versioning.
+   *
+   * Versioning runs through the following:
+   *
+   * 1. Looks at version-property settings, and checks the sys.props to see if this has a value.
+   * 2. Looks at the project tags.  The first to match the `gitTagToVersionNumberSetting` is used to assign the version.
+   * 3. if we have a head commit, we attach this to the base version setting "<base-version>.<git commit sha>"
+   * 4. We append the current timestamp tot he base version: "<base-version>.<timestamp>"
+   */
   def versionWithGit: Seq[Setting[_]] =
     Seq(
         gitTagToVersionNumber in ThisBuild := (git.defaultTagByVersionStrategy _),
@@ -118,7 +136,11 @@ object SbtGit extends Plugin {
       else None
     }
     // Simple fall-through on how to define the project version.
-    def makeVersion(versionProperty: String, baseVersion: String, headCommit: String, currentTags: Seq[String], releaseTagVersion: String => Option[String]): String = {
+    // TODO - Split this to use multiple settings, perhaps.
+    def makeVersion(versionProperty: String, baseVersion: String, headCommit: Option[String], currentTags: Seq[String], releaseTagVersion: String => Option[String]): String = {
+      // The version string passed in via command line settings, if desired.
+      def overrideVersion = Option(sys.props(versionProperty))
+      // Version string that is computed from tags.
       def releaseVersion: Option[String] = {
         val releaseVersions =
           for {
@@ -127,11 +149,17 @@ object SbtGit extends Plugin {
           } yield version
         releaseVersions.headOption
       }
-      def commitVersion: String =
-         baseVersion + "-" + headCommit
-      def overrideVersion = Option(sys.props(versionProperty))
+      // Version string that just uses the commit version.
+      def commitVersion: Option[String] =
+         headCommit map (sha => baseVersion + "-" + sha)
+      // Version string that just uses the full timestamp.
+      def datedVersion: String = {
+        val df = new java.text.SimpleDateFormat("yyyyMMdd'T'HHmmss")
+        df setTimeZone java.util.TimeZone.getTimeZone("GMT")
+        baseVersion + "-" + (df format (new java.util.Date))
+      }
       //Now we fall through the potential version numbers...
-      overrideVersion  orElse releaseVersion getOrElse commitVersion
+      overrideVersion  orElse releaseVersion orElse commitVersion getOrElse datedVersion
     }
   }
 }

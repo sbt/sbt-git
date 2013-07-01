@@ -8,29 +8,15 @@ object JGitRunner extends GitRunner {
 
   override def apply(args: String*)(cwd: File, log: Logger = ConsoleLogger()): String = {
     args.headOption match {
-      case Some("push") => push(args drop 1)(cwd, log)
-      case Some("pull") => pull(args drop 1)(cwd, log)
-      case Some("clone") => clone(args drop 1)(cwd, log)
+      // For now, let's just use the JGIT comand line and see what happens.
+      // Eventually we can aim to speed up commands...
+      //case Some("push") => push(args drop 1)(cwd, log)
+      //case Some("pull") => pull(args drop 1)(cwd, log)
+      //case Some("clone") => clone(args drop 1)(cwd, log)
       case _ =>  forkJGitMain(args:_*)(cwd, log)
     }
   }
 
-
-  override def headCommit(cwd: File, log: Logger) = {
-    val git = JGit(cwd)
-    git.headCommitSha getOrElse sys.error("Could not find a head commit in " + cwd)
-  }
-
-  override def currentTags(cwd: File, log: Logger): Seq[String] = {
-    val git = JGit(cwd)
-    git.currentTags
-  }
-
-
-  override def currentBranchOrNone(cwd: File, log: Logger): Option[String] = {
-    val git = JGit(cwd)
-    Option(git.branch)
-  }
   /**
        git clone [--template=<template_directory>]
                  [-l] [-s] [--no-hardlinks] [-q] [-n] [--bare] [--mirror]

@@ -90,8 +90,7 @@ object SbtGit extends Plugin {
   )
   override val settings = Seq(
     // Input task to run git commands directly.
-    commands += GitCommand.command ,
-    shellPrompt := GitCommand.prompt
+    commands += GitCommand.command
   )
   /** A Predefined setting to use JGit runner for git. */
   def useJGit: Setting[_] = gitRunner in ThisBuild := JGitRunner

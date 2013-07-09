@@ -85,7 +85,8 @@ object SbtGit extends Plugin {
       reader.withGit(_.currentTags)
     },
     gitCurrentBranch in ThisBuild <<= (gitReader in ThisBuild) apply { (reader) =>
-      reader.withGit(_.branch)
+      // TODO - Make current branch an option?
+      Option(reader.withGit(_.branch)) getOrElse ""
     }
   )
   override val settings = Seq(

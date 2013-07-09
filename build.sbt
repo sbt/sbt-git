@@ -4,7 +4,7 @@ name := "sbt-git"
 
 organization := "com.typesafe.sbt"
 
-version := "0.6.2"
+version := "0.6.3"
 
 libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit.pgm" % "2.2.0.201212191850-r"
 

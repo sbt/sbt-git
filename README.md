@@ -46,7 +46,7 @@ following setting to your build (not necessary for every project):
 
 The `baseVersion` setting represents the in-development version you're working on. While
 a future release of the Git plugin may be able to automatically detect the version from tag,
-we feel it's best to confiure this version per branch.  Note, you can create a separate
+we feel it's best to configure this version per branch.  Note, you can create a separate
 `version.sbt` file for the project where you store the base version.
 
 The git plugin will now autogenerate your version using the following rules, in order:

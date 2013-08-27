@@ -29,7 +29,7 @@ Or you can type this into the prompt:
     [info] Reapplying settings...
     [info] Set current project to scala-arm (in build file:...)
 
-This will enabled a java-only GIT solution that, while not supporting all the same
+This will enable a java-only GIT solution that, while not supporting all the same
 commands that can be run in the standard git command line, is good enough for most
 git activities.
 

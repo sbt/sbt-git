@@ -20,7 +20,11 @@ object ConsoleGitRunner extends GitRunner {
     val full = cmd ++ args
     log.debug(cwd + "$ " + full.mkString(" "))
     val code = Process(full, cwd) ! gitLogger
-    gitLogger.flush(code)
+    val result = gitLogger.flush(code)
+    if(code != 0)
+      error("Nonzero exit code (" + code + ") running git.")
+    else
+      result
   }
 
   override def toString = "git"

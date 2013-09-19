@@ -62,10 +62,11 @@ object JGitRunner extends GitRunner {
        case cl: java.net.URLClassLoader =>
          val cp = cl.getURLs map (_.getFile) mkString ":"
          val baos = new java.io.ByteArrayOutputStream
-         Fork.java(None, Seq("-classpath", cp, "org.eclipse.jgit.pgm.Main") ++ args, Some(cwd), CustomOutput(baos))
+			// NOTE: this will always return 0 until sbt 0.13.1 due to the use of CustomOutput
+         val code = Fork.java(None, Seq("-classpath", cp, "org.eclipse.jgit.pgm.Main") ++ args, Some(cwd), CustomOutput(baos))
          val result = baos.toString
          log.info(result)
-         result
+         if(code == 0) result else error("Nonzero exit code (" + code + ") running JGit.")
        case _ => sys.error("Could not find classpath for JGit!")
     }
 

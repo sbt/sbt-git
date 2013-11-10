@@ -38,7 +38,7 @@ git activities.
 
 You can begin to use git to control your project versions.  To do so, simply add the
 
-following setting to your build (not necessary for every project):
+following settings to your build (not necessary for every project), in **this specific order**:
 
     versionWithGit
 

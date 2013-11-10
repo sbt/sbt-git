@@ -37,7 +37,6 @@ git activities.
 ## Versioning with Git ##
 
 You can begin to use git to control your project versions.  To do so, simply add the
-
 following settings to your build (not necessary for every project), in **this specific order**:
 
     versionWithGit

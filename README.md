@@ -40,9 +40,9 @@ You can begin to use git to control your project versions.  To do so, simply add
 
 following setting to your build (not necessary for every project):
 
-    git.baseVersion := "1.0"
-
     versionWithGit
+
+    git.baseVersion := "0.1"
 
 The `baseVersion` setting represents the in-development version you're working on. While
 a future release of the Git plugin may be able to automatically detect the version from tag,

@@ -22,7 +22,7 @@ object ConsoleGitRunner extends GitRunner {
     val code = Process(full, cwd) ! gitLogger
     val result = gitLogger.flush(code)
     if(code != 0)
-      error("Nonzero exit code (" + code + ") running git.")
+      sys.error("Nonzero exit code (" + code + ") running git.")
     else
       result
   }

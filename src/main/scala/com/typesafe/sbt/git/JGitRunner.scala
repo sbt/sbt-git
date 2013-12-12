@@ -8,8 +8,7 @@ object JGitRunner extends GitRunner {
 
   override def apply(args: String*)(cwd: File, log: Logger = ConsoleLogger()): String = {
     args.headOption match {
-      // For now, let's just use the JGIT comand line and see what happens.
-      // Eventually we can aim to speed up commands...
+      // For now, let's just use the JGIT comand line and see what happens.  // Eventually we can aim to speed up commands...
       //case Some("push") => push(args drop 1)(cwd, log)
       //case Some("pull") => pull(args drop 1)(cwd, log)
       //case Some("clone") => clone(args drop 1)(cwd, log)
@@ -66,11 +65,9 @@ object JGitRunner extends GitRunner {
          val code = Fork.java(None, Seq("-classpath", cp, "org.eclipse.jgit.pgm.Main") ++ args, Some(cwd), CustomOutput(baos))
          val result = baos.toString
          log.info(result)
-         if(code == 0) result else error("Nonzero exit code (" + code + ") running JGit.")
+         if(code == 0) result else sys.error("Nonzero exit code (" + code + ") running JGit.")
        case _ => sys.error("Could not find classpath for JGit!")
     }
 
   override def toString = "jgit"
-
 }
-

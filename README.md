@@ -55,7 +55,7 @@ The git plugin will now autogenerate your version using the following rules, in 
 3. if we have a head commit (meaning this isn't a brand new repository), we attach this to the base version setting "<base-version>.<git commit sha>"
 4. We append the current timestamp to the base version: "<base-version>.<timestamp>".
 
-You can alter the tag-detection algorith using the `git.gitTagToVersionNumber` setting. For example, if we wanted to alter the default version tag detection so it does not require a "v" at the start of tags, we could add the following setting:
+You can alter the tag-detection algorithm using the `git.gitTagToVersionNumber` setting. For example, if we wanted to alter the default version tag detection so it does not require a "v" at the start of tags, we could add the following setting:
 
     git.gitTagToVersionNumber := { tag: String =>
       if(tag matches "[0.9]+\\..*") Some(tag)

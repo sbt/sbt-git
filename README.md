@@ -39,6 +39,8 @@ git activities.
 You can begin to use git to control your project versions.  To do so, simply add the
 following settings to your build (not necessary for every project), in **this specific order**:
 
+    import com.typesafe.sbt.SbtGit._
+
     versionWithGit
 
     git.baseVersion := "0.1"

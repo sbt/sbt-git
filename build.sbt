@@ -4,9 +4,9 @@ name := "sbt-git"
 
 organization := "com.typesafe.sbt"
 
-version := "0.6.3"
+version := "0.6.4-SNAPSHOT"
 
-libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit.pgm" % "2.2.0.201212191850-r"
+libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit.pgm" % "3.3.0.201403021825-r"
 
 publishMavenStyle := false
 

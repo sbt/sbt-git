@@ -79,12 +79,8 @@ object JGit {
   /** Creates a new git instance from a base directory. */
   def apply(base: File) = new JGit({
     val gitDir = new File(base, ".git")
-    new FileRepositoryBuilder().setGitDir(gitDir)
-      .readEnvironment() // scan environment GIT_* variables
-     .findGitDir() // scan up the file system tree
-     .build()
+    FileRepositoryBuilder.create(gitDir)
   })
-
 
   /** Clones from a given URI into a local directory of your choosing. */
   def clone(from: String, to: File, remoteName: String = "origin", cloneAllBranches: Boolean = true, bare: Boolean = false): JGit = {

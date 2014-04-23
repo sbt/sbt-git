@@ -6,7 +6,7 @@ organization := "com.typesafe.sbt"
 
 version := "0.6.4-SNAPSHOT"
 
-libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit.pgm" % "3.3.1.201403241930-r"
+libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit.pgm" % "3.3.2.201404171909-r"
 
 publishMavenStyle := false
 

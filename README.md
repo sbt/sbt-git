@@ -43,19 +43,17 @@ following settings to your build (not necessary for every project), in **this sp
 
     versionWithGit
 
+    // Optionally:
     git.baseVersion := "0.1"
-
-The `baseVersion` setting represents the in-development version you're working on. While
-a future release of the Git plugin may be able to automatically detect the version from tag,
-we feel it's best to configure this version per branch.  Note, you can create a separate
-`version.sbt` file for the project where you store the base version.
 
 The git plugin will now autogenerate your version using the following rules, in order:
 
 1. Looks at version-property setting (default to `project.version`), and checks the `sys.props` to see if this has a value.  If so, use it.
-2. Looks at the project tags.  The first to match the `gitTagToVersionNumberSetting` is used to assign the version.  The default is to look for tags that begin with `v` and a number, and use the number as the version.  If we don't have a match, go to the next rule.
-3. if we have a head commit (meaning this isn't a brand new repository), we attach this to the base version setting "<base-version>.<git commit sha>"
-4. We append the current timestamp to the base version: "<base-version>.<timestamp>".
+2. Otherwise, looks at the project tags.  The first to match the `gitTagToVersionNumberSetting` is used to assign the version.  The default is to look for tags that begin with `v` and a number, and use the number as the version.
+3. If no tags are found either, look at the head commit. We attach this to the `git.baseVersion` setting: "&lt;base-version&gt;.&lt;git commit sha&gt;"
+4. If no head commit is present either (which means this is a brand-new repository with no commits yet), we append the current timestamp to the base version: "&lt;base-version&gt;.&lt;timestamp&gt;".
+
+The `git.baseVersion` setting represents the in-development (upcoming) version you're working on.
 
 You can alter the tag-detection algorithm using the `git.gitTagToVersionNumber` setting. For example, if we wanted to alter the default version tag detection so it does not require a "v" at the start of tags, we could add the following setting:
 

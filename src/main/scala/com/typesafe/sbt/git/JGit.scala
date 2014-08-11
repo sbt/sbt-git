@@ -78,8 +78,7 @@ object JGit {
 
   /** Creates a new git instance from a base directory. */
   def apply(base: File) = new JGit({
-    val gitDir = new File(base, ".git")
-    FileRepositoryBuilder.create(gitDir)
+    new FileRepositoryBuilder().findGitDir(base).build
   })
 
   /** Clones from a given URI into a local directory of your choosing. */

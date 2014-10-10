@@ -46,13 +46,18 @@ object SbtGit extends Plugin {
     // <arg> is the suggestion printed for tab completion on an argument
     val command: Command = Command.args("git", "<args>")(action)
 
-    @scala.annotation.tailrec
     private def isGitRepo(dir: File): Boolean = {
+      if (System.getenv("GIT_DIR") != null) true
+      else isGitDir(dir)
+    }
+
+    @scala.annotation.tailrec
+    private def isGitDir(dir: File): Boolean = {
       if (dir.listFiles().map(_.getName).contains(".git")) true
       else {
         val parent = dir.getParentFile
         if (parent == null) false
-        else isGitRepo(parent)
+        else isGitDir(parent)
       }
     }
 

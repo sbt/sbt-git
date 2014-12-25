@@ -1,12 +1,12 @@
 # sbt-git #
 
-The `sbt-git` plugin offers git command line features directly inside of sbt as
+The `sbt-git` plugin offers git command line features directly inside sbt as
 well as allowing other plugins to make use of git.
 
 
 ## Installation ##
 
-Add the following to your `project/plugins.sbt` or `~/.sbt/plugins/plugins.sbt` file:
+Add the following to your `project/plugins.sbt` or `~/.sbt/0.13/plugins/plugins.sbt` file:
 
     resolvers += "jgit-repo" at "http://download.eclipse.org/jgit/maven"
 
@@ -16,7 +16,7 @@ Add the following to your `project/plugins.sbt` or `~/.sbt/plugins/plugins.sbt` 
 ### Using JGit ###
 
 If you do not have git installed and available on your path (e.g. you use windows),
-make sure your `git.sbt` or `~/.sbt/git.sbt` file looks like this:
+make sure your `git.sbt` or `~/.sbt/0.13/git.sbt` file looks like this:
 
     useJGit
 
@@ -91,4 +91,4 @@ In an sbt prompt, simply enter any git command.  e.g.
 
 ## Licensing ##
 
-This software is licensed under the BSD licenese.
+This software is licensed under the BSD license.

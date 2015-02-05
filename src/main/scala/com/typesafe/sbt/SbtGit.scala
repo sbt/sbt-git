@@ -24,6 +24,7 @@ object SbtGit extends Plugin {
     val gitRunner = TaskKey[GitRunner]("git-runner", "The mechanism used to run git in the current build.")
 
     // Keys associated with setting a version number.
+    val useGitDescribe = SettingKey[Boolean]("use-git-describe", "Get version by calling `git describe` on the repository")
     val gitTagToVersionNumber = SettingKey[String => Option[String]]("git-tag-to-version-number", "Converts a git tag string to a version number.")
     val baseVersion = SettingKey[String]("base-version", "The base version number which we will append the git version to.")
     val versionProperty = SettingKey[String]("version-property", "The system property that can be used to override the version number.  Defaults to `project.version`.")
@@ -124,7 +125,8 @@ object SbtGit extends Plugin {
         gitTagToVersionNumber in ThisBuild := (git.defaultTagByVersionStrategy _),
         baseVersion in ThisBuild := "1.0",
         versionProperty in ThisBuild := "project.version",
-        version in ThisBuild <<= (git.versionProperty, git.baseVersion, git.gitHeadCommit, git.gitDescribedVersion, git.gitCurrentTags, git.gitTagToVersionNumber) apply git.makeVersion
+        useGitDescribe in ThisBuild := false,
+        version in ThisBuild <<= (git.versionProperty, git.baseVersion, git.gitHeadCommit, git.useGitDescribe, git.gitDescribedVersion, git.gitCurrentTags, git.gitTagToVersionNumber) apply git.makeVersion
     )
 
 
@@ -134,6 +136,7 @@ object SbtGit extends Plugin {
     val branch = GitKeys.gitBranch
     val runner = GitKeys.gitRunner in ThisBuild
     val gitHeadCommit = GitKeys.gitHeadCommit in ThisBuild
+    val useGitDescribe = GitKeys.useGitDescribe in ThisBuild
     val gitDescribedVersion = GitKeys.gitDescribedVersion in ThisBuild
     val gitCurrentTags = GitKeys.gitCurrentTags in ThisBuild
     val gitCurrentBranch = GitKeys.gitCurrentBranch in ThisBuild
@@ -147,7 +150,7 @@ object SbtGit extends Plugin {
     }
     // Simple fall-through on how to define the project version.
     // TODO - Split this to use multiple settings, perhaps.
-    def makeVersion(versionProperty: String, baseVersion: String, headCommit: Option[String], describedVersion:Option[String], currentTags: Seq[String], releaseTagVersion: String => Option[String]): String = {
+    def makeVersion(versionProperty: String, baseVersion: String, headCommit: Option[String], useGitDescribe:Boolean, gitDescribedVersion:Option[String], currentTags: Seq[String], releaseTagVersion: String => Option[String]): String = {
       // The version string passed in via command line settings, if desired.
       def overrideVersion = Option(sys.props(versionProperty))
       // Version string that is computed from tags.
@@ -159,6 +162,8 @@ object SbtGit extends Plugin {
           } yield version
         releaseVersions.headOption
       }
+      def describedVersion: Option[String] = if(useGitDescribe) gitDescribedVersion else None
+
       // Version string that just uses the commit version.
       def commitVersion: Option[String] =
          headCommit map (sha => baseVersion + "-" + sha)

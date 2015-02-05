@@ -7,6 +7,8 @@ import java.io.File
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.Ref
 
+import scala.util.Try
+
 
 // TODO - This class needs a bit more work, but at least it lets us use porcelain and wrap some higher-level
 // stuff on top of JGit, as needed for our plugin.
@@ -71,6 +73,10 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
       else
         peeled.getObjectId
     id.getName
+  }
+
+  override def describedVersion: Option[String] = {
+    Try { porcelain.describe().call() } toOption
   }
 }
 

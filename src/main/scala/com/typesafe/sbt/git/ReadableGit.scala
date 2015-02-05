@@ -13,6 +13,8 @@ trait GitReadonlyInterface {
   def headCommitSha: Option[String]
   /** The current tags associated with the local repository (at its HEAD). */
   def currentTags: Seq[String]
+  /** Version of the software as returned by `git describe --tags`. */
+  def describedVersion: Option[String]
 }
 
 

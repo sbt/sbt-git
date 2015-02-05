@@ -18,6 +18,7 @@ object SbtGit extends Plugin {
     val gitCurrentBranch = SettingKey[String]("git-current-branch", "The current branch for this project.")
     val gitCurrentTags = SettingKey[Seq[String]]("git-current-tags", "The tags associated with this commit.")
     val gitHeadCommit = SettingKey[Option[String]]("git-head-commit", "The commit sha for the top commit of this project.")
+    val gitDescribedVersion = SettingKey[Option[String]]("git-described-version", "Version as returned by `git describe --tags`.")
 
     // A Mechanism to run Git directly.
     val gitRunner = TaskKey[GitRunner]("git-runner", "The mechanism used to run git in the current build.")
@@ -86,6 +87,9 @@ object SbtGit extends Plugin {
       // TODO - Figure out logging!
       reader.withGit(_.headCommitSha)
     },
+    gitDescribedVersion in ThisBuild <<= (gitReader in ThisBuild) apply { (reader) =>
+      reader.withGit(_.describedVersion)
+    },
     gitCurrentTags in ThisBuild <<= (gitReader in ThisBuild) apply { (reader) =>
       reader.withGit(_.currentTags)
     },
@@ -120,7 +124,7 @@ object SbtGit extends Plugin {
         gitTagToVersionNumber in ThisBuild := (git.defaultTagByVersionStrategy _),
         baseVersion in ThisBuild := "1.0",
         versionProperty in ThisBuild := "project.version",
-        version in ThisBuild <<= (git.versionProperty, git.baseVersion, git.gitHeadCommit, git.gitCurrentTags, git.gitTagToVersionNumber) apply git.makeVersion
+        version in ThisBuild <<= (git.versionProperty, git.baseVersion, git.gitHeadCommit, git.gitDescribedVersion, git.gitCurrentTags, git.gitTagToVersionNumber) apply git.makeVersion
     )
 
 
@@ -130,6 +134,7 @@ object SbtGit extends Plugin {
     val branch = GitKeys.gitBranch
     val runner = GitKeys.gitRunner in ThisBuild
     val gitHeadCommit = GitKeys.gitHeadCommit in ThisBuild
+    val gitDescribedVersion = GitKeys.gitDescribedVersion in ThisBuild
     val gitCurrentTags = GitKeys.gitCurrentTags in ThisBuild
     val gitCurrentBranch = GitKeys.gitCurrentBranch in ThisBuild
     val gitTagToVersionNumber = GitKeys.gitTagToVersionNumber in ThisBuild
@@ -142,7 +147,7 @@ object SbtGit extends Plugin {
     }
     // Simple fall-through on how to define the project version.
     // TODO - Split this to use multiple settings, perhaps.
-    def makeVersion(versionProperty: String, baseVersion: String, headCommit: Option[String], currentTags: Seq[String], releaseTagVersion: String => Option[String]): String = {
+    def makeVersion(versionProperty: String, baseVersion: String, headCommit: Option[String], describedVersion:Option[String], currentTags: Seq[String], releaseTagVersion: String => Option[String]): String = {
       // The version string passed in via command line settings, if desired.
       def overrideVersion = Option(sys.props(versionProperty))
       // Version string that is computed from tags.
@@ -164,7 +169,7 @@ object SbtGit extends Plugin {
         baseVersion + "-" + (df format (new java.util.Date))
       }
       //Now we fall through the potential version numbers...
-      overrideVersion  orElse releaseVersion orElse commitVersion getOrElse datedVersion
+      overrideVersion  orElse releaseVersion orElse describedVersion orElse commitVersion getOrElse datedVersion
     }
   }
 }

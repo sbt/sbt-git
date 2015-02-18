@@ -24,6 +24,8 @@ object SbtGit extends Plugin {
 
     // Keys associated with setting a version number.
     val gitTagToVersionNumber = SettingKey[String => Option[String]]("git-tag-to-version-number", "Converts a git tag string to a version number.")
+    val formatShaVersion = SettingKey[(String,String) => String]("format-sha-version","Formats the version string when it's built with git sha.")
+    val formatDateVersion = SettingKey[(String,java.util.Date) => String]("format-date-version","Formats the version string when it's built with the current date.")
     val baseVersion = SettingKey[String]("base-version", "The base version number which we will append the git version to.")
     val versionProperty = SettingKey[String]("version-property", "The system property that can be used to override the version number.  Defaults to `project.version`.")
 
@@ -118,9 +120,17 @@ object SbtGit extends Plugin {
   def versionWithGit: Seq[Setting[_]] =
     Seq(
         gitTagToVersionNumber in ThisBuild := (git.defaultTagByVersionStrategy _),
+        formatShaVersion in ThisBuild := (git.defaultFormatShaVersion _),
+        formatDateVersion in ThisBuild := (git.defaultFormatDateVersion _),
         baseVersion in ThisBuild := "1.0",
         versionProperty in ThisBuild := "project.version",
-        version in ThisBuild <<= (git.versionProperty, git.baseVersion, git.gitHeadCommit, git.gitCurrentTags, git.gitTagToVersionNumber) apply git.makeVersion
+        version in ThisBuild <<= (git.versionProperty, 
+                                  git.baseVersion, 
+                                  git.gitHeadCommit, 
+                                  git.gitCurrentTags, 
+                                  git.gitTagToVersionNumber,
+                                  git.formatShaVersion,
+                                  git.formatDateVersion) apply git.makeVersion
     )
 
 
@@ -133,6 +143,8 @@ object SbtGit extends Plugin {
     val gitCurrentTags = GitKeys.gitCurrentTags in ThisBuild
     val gitCurrentBranch = GitKeys.gitCurrentBranch in ThisBuild
     val gitTagToVersionNumber = GitKeys.gitTagToVersionNumber in ThisBuild
+    val formatShaVersion = GitKeys.formatShaVersion in ThisBuild
+    val formatDateVersion = GitKeys.formatDateVersion in ThisBuild
     val baseVersion = GitKeys.baseVersion in ThisBuild
     val versionProperty = GitKeys.versionProperty in ThisBuild
 
@@ -140,9 +152,26 @@ object SbtGit extends Plugin {
       if(tag matches "v[0-9].*") Some(tag drop 1)
       else None
     }
+    
+    def defaultFormatShaVersion(baseVersion:String, sha:String):String = {
+      baseVersion + "-" + sha
+    }
+    
+    def defaultFormatDateVersion(baseVersion:String, date:java.util.Date):String = {
+        val df = new java.text.SimpleDateFormat("yyyyMMdd'T'HHmmss")
+        df setTimeZone java.util.TimeZone.getTimeZone("GMT")
+        baseVersion + "-" + (df format (new java.util.Date))
+    }
+    
     // Simple fall-through on how to define the project version.
     // TODO - Split this to use multiple settings, perhaps.
-    def makeVersion(versionProperty: String, baseVersion: String, headCommit: Option[String], currentTags: Seq[String], releaseTagVersion: String => Option[String]): String = {
+    def makeVersion(versionProperty: String, 
+                    baseVersion: String, 
+                    headCommit: Option[String], 
+                    currentTags: Seq[String], 
+                    releaseTagVersion: String => Option[String],
+                    formatShaVersion: (String, String) => String,
+                    formatDateVersion: (String, java.util.Date) => String): String = {
       // The version string passed in via command line settings, if desired.
       def overrideVersion = Option(sys.props(versionProperty))
       // Version string that is computed from tags.
@@ -156,12 +185,10 @@ object SbtGit extends Plugin {
       }
       // Version string that just uses the commit version.
       def commitVersion: Option[String] =
-         headCommit map (sha => baseVersion + "-" + sha)
+         headCommit map (sha => formatShaVersion(baseVersion,sha))
       // Version string that just uses the full timestamp.
       def datedVersion: String = {
-        val df = new java.text.SimpleDateFormat("yyyyMMdd'T'HHmmss")
-        df setTimeZone java.util.TimeZone.getTimeZone("GMT")
-        baseVersion + "-" + (df format (new java.util.Date))
+        formatDateVersion(baseVersion,new java.util.Date)
       }
       //Now we fall through the potential version numbers...
       overrideVersion  orElse releaseVersion orElse commitVersion getOrElse datedVersion

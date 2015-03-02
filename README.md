@@ -62,6 +62,11 @@ You can alter the tag-detection algorithm using the `git.gitTagToVersionNumber` 
       else None
     }
 
+You can turn on version detection using `git describe` command by adding:
+
+    git.useGitDescribe := true
+
+This way version returned will be last tag + number of commits since tag + short hash.
 
 ## Prompts ##
 

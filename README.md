@@ -23,6 +23,8 @@ To modify the formatter so that there is no dash (rpm doesn't like dash), add th
       baseVersion + "." + sha 
     }
 
+Note that we will soon have a pull request out to the origin project to stop maintaining our own copy.
+
 For all the other settings, refer to the original doc below:
 
 # sbt-git #

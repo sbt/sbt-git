@@ -8,8 +8,6 @@ well as allowing other plugins to make use of git.
 
 Add the following to your `project/plugins.sbt` or `~/.sbt/0.13/plugins/plugins.sbt` file:
 
-    resolvers += "jgit-repo" at "http://download.eclipse.org/jgit/maven"
-
     addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.6.4")
 
 

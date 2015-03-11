@@ -26,7 +26,7 @@ object SbtGit extends Plugin {
     // Keys associated with setting a version number.
     val useGitDescribe = SettingKey[Boolean]("use-git-describe", "Get version by calling `git describe` on the repository")
     val gitTagToVersionNumber = SettingKey[String => Option[String]]("git-tag-to-version-number", "Converts a git tag string to a version number.")
-    val baseVersion = SettingKey[String]("base-version", "The base version number which we will append the git version to.")
+    val baseVersion = SettingKey[Option[String]]("base-version", "The base version number which we will append the git version to.")
     val versionProperty = SettingKey[String]("version-property", "The system property that can be used to override the version number.  Defaults to `project.version`.")
 
     // The remote repository we're using.
@@ -123,7 +123,7 @@ object SbtGit extends Plugin {
   def versionWithGit: Seq[Setting[_]] =
     Seq(
         gitTagToVersionNumber in ThisBuild := (git.defaultTagByVersionStrategy _),
-        baseVersion in ThisBuild := "1.0",
+        baseVersion in ThisBuild := Some("1.0"),
         versionProperty in ThisBuild := "project.version",
         useGitDescribe in ThisBuild := false,
         version in ThisBuild <<= (git.versionProperty, git.baseVersion, git.gitHeadCommit, git.useGitDescribe, git.gitDescribedVersion, git.gitCurrentTags, git.gitTagToVersionNumber) apply git.makeVersion
@@ -150,7 +150,7 @@ object SbtGit extends Plugin {
     }
     // Simple fall-through on how to define the project version.
     // TODO - Split this to use multiple settings, perhaps.
-    def makeVersion(versionProperty: String, baseVersion: String, headCommit: Option[String], useGitDescribe:Boolean, gitDescribedVersion:Option[String], currentTags: Seq[String], releaseTagVersion: String => Option[String]): String = {
+    def makeVersion(versionProperty: String, baseVersion: Option[String], headCommit: Option[String], useGitDescribe:Boolean, gitDescribedVersion:Option[String], currentTags: Seq[String], releaseTagVersion: String => Option[String]): String = {
       // The version string passed in via command line settings, if desired.
       def overrideVersion = Option(sys.props(versionProperty))
       // Version string that is computed from tags.
@@ -165,14 +165,16 @@ object SbtGit extends Plugin {
       }
       def describedVersion: Option[String] = if(useGitDescribe) gitDescribedVersion else None
 
+      val basePrefix = baseVersion.map(_ + "-").getOrElse("")
+      
       // Version string that just uses the commit version.
       def commitVersion: Option[String] =
-         headCommit map (sha => baseVersion + "-" + sha)
+         headCommit map (sha => basePrefix + sha)
       // Version string that just uses the full timestamp.
       def datedVersion: String = {
         val df = new java.text.SimpleDateFormat("yyyyMMdd'T'HHmmss")
         df setTimeZone java.util.TimeZone.getTimeZone("GMT")
-        baseVersion + "-" + (df format (new java.util.Date))
+        basePrefix + (df format (new java.util.Date))
       }
       //Now we fall through the potential version numbers...
       overrideVersion  orElse releaseVersion orElse describedVersion orElse commitVersion getOrElse datedVersion

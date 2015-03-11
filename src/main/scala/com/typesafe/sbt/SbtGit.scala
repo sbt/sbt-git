@@ -9,7 +9,11 @@ import com.typesafe.sbt.git.ReadableGit
 import com.typesafe.sbt.git.DefaultReadableGit
 
 /** This plugin has all the basic 'git' functionality for other plugins. */
-object SbtGit extends Plugin {
+object SbtGit extends AutoPlugin {
+
+  override def requires = sbt.plugins.CorePlugin
+  override def trigger = allRequirements
+
   object GitKeys {
     // Read-only git settings and values for use in other build settings.
     // Note: These are all grabbed using jgit currently.
@@ -78,34 +82,22 @@ object SbtGit extends Plugin {
     }
   }
 
+  // Build settings.
   import GitKeys._
-  // Use SBT 0.12's features for advantage!
-  // We store our global build settings just once.
-  override val projectSettings = Seq(
-    gitReader in ThisBuild <<= (baseDirectory in ThisBuild) apply (new DefaultReadableGit(_)),
-    gitRunner in ThisBuild := ConsoleGitRunner,
-    gitHeadCommit in ThisBuild <<= (gitReader in ThisBuild) apply { (reader) =>
-      // TODO - Figure out logging!
-      reader.withGit(_.headCommitSha)
-    },
-    gitDescribedVersion in ThisBuild <<= (gitReader in ThisBuild) apply { (reader) =>
-      reader.withGit(_.describedVersion)
-    },
-    gitCurrentTags in ThisBuild <<= (gitReader in ThisBuild) apply { (reader) =>
-      reader.withGit(_.currentTags)
-    },
-    gitCurrentBranch in ThisBuild <<= (gitReader in ThisBuild) apply { (reader) =>
-      // TODO - Make current branch an option?
-      Option(reader.withGit(_.branch)) getOrElse ""
-    },
-    gitUncommittedChanges in ThisBuild <<= (gitReader in ThisBuild) apply { (reader) =>
-      reader.withGit(_.hasUncommittedChanges)
-    }
+  override def buildSettings = Seq(
+    gitReader := new DefaultReadableGit(baseDirectory.value),
+    gitRunner := ConsoleGitRunner,
+    gitHeadCommit := gitReader.value.withGit(_.headCommitSha),
+    gitDescribedVersion := gitReader.value.withGit(_.describedVersion),
+    gitCurrentTags := gitReader.value.withGit(_.currentTags),
+    gitCurrentBranch := Option(gitReader.value.withGit(_.branch)).getOrElse(""),
+    gitUncommittedChanges in ThisBuild := gitReader.value.withGit(_.hasUncommittedChanges)
   )
-  override val settings = Seq(
+  override val projectSettings = Seq(
     // Input task to run git commands directly.
     commands += GitCommand.command
   )
+
   /** A Predefined setting to use JGit runner for git. */
   def useJGit: Setting[_] = gitRunner in ThisBuild := JGitRunner
 
@@ -143,7 +135,6 @@ object SbtGit extends Plugin {
           )
         }
     )
-
 
   /** A holder of keys for simple config. */
   object git {
@@ -198,4 +189,23 @@ object SbtGit extends Plugin {
       overrideVersion  orElse releaseVersion orElse describedVersion orElse commitVersion getOrElse datedVersion
     }
   }
+  // Note: In an attempt to pretend we are binary compatible, we current add this as an after thought.
+  // In 1.0, we should deprecate/move the other meaans of getting these values.
+  object autoImport {
+    val git = SbtGit.git
+    def versionWithGit = SbtGit.versionWithGit
+    def useJGit = SbtGit.useJGit
+    def showCurrentGitBranch = SbtGit.showCurrentGitBranch
+  }
+}
+
+/** Adapter to auto-enable git versioning.  i.e. the sbt 0.13.5+ mechanism of turning it on. */
+object GitVersioning extends AutoPlugin {
+  override def requires = sbt.plugins.IvyPlugin && SbtGit
+  override def projectSettings = SbtGit.autoImport.versionWithGit
+}
+/** Adapter to enable the git prompt. i.e. rich prompt based on git info. */
+object GitBranchPrompt extends AutoPlugin {
+  override def requires = SbtGit
+  override  def projectSettings = SbtGit.showCurrentGitBranch
 }

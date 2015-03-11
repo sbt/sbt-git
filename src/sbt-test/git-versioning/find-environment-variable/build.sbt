@@ -1,6 +1,4 @@
-import com.typesafe.sbt.SbtGit._
-
-versionWithGit
+enablePlugins(GitVersioning)
 
 val checkVersion = taskKey[Unit]("checks the version is the tag versino")
 checkVersion := {

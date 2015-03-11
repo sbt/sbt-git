@@ -26,7 +26,7 @@ object SbtGit extends Plugin {
     // Keys associated with setting a version number.
     val useGitDescribe = SettingKey[Boolean]("use-git-describe", "Get version by calling `git describe` on the repository")
     val gitTagToVersionNumber = SettingKey[String => Option[String]]("git-tag-to-version-number", "Converts a git tag string to a version number.")
-    val baseVersion = SettingKey[Option[String]]("base-version", "The base version number which we will append the git version to.")
+    val baseVersion = SettingKey[String]("base-version", "The base version number which we will append the git version to.  May be left unspecified.")
     val versionProperty = SettingKey[String]("version-property", "The system property that can be used to override the version number.  Defaults to `project.version`.")
 
     // The remote repository we're using.
@@ -123,10 +123,19 @@ object SbtGit extends Plugin {
   def versionWithGit: Seq[Setting[_]] =
     Seq(
         gitTagToVersionNumber in ThisBuild := (git.defaultTagByVersionStrategy _),
-        baseVersion in ThisBuild := Some("1.0"),
         versionProperty in ThisBuild := "project.version",
         useGitDescribe in ThisBuild := false,
-        version in ThisBuild <<= (git.versionProperty, git.baseVersion, git.gitHeadCommit, git.useGitDescribe, git.gitDescribedVersion, git.gitCurrentTags, git.gitTagToVersionNumber) apply git.makeVersion
+        version in ThisBuild := {
+          git.makeVersion(
+            versionProperty=git.versionProperty.value,
+            baseVersion = git.baseVersion.?.value,
+            headCommit = git.gitHeadCommit.value,
+            useGitDescribe = git.useGitDescribe.value,
+            gitDescribedVersion = git.gitDescribedVersion.value,
+            currentTags = git.gitCurrentTags.value,
+            releaseTagVersion = git.gitTagToVersionNumber.value
+          )
+        }
     )
 
 

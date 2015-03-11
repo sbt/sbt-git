@@ -160,7 +160,8 @@ object SbtGit extends Plugin {
             tag <- currentTags
             version <- releaseTagVersion(tag)
           } yield version
-        releaseVersions.headOption
+        // NOTE - Selecting the last tag or the first tag should be an option.
+        releaseVersions.reverse.headOption
       }
       def describedVersion: Option[String] = if(useGitDescribe) gitDescribedVersion else None
 

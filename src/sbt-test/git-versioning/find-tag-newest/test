@@ -1,4 +1,6 @@
 > git init
+> git config user.email "test@jsuereth.com"
+> git config user.name "Tester"
 > git add README.md
 > git commit -m "test"
 > git tag v1.0.0

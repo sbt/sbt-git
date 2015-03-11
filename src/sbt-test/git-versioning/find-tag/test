@@ -1,0 +1,8 @@
+> git init
+> git add README.md
+> git commit -m "test"
+> git tag v1.0.0
+$ copy-file changes/build.sbt build.sbt
+> reload
+> inspect version
+> checkVersion

@@ -19,7 +19,8 @@ object SbtGit extends Plugin {
     val gitCurrentTags = SettingKey[Seq[String]]("git-current-tags", "The tags associated with this commit.")
     val gitHeadCommit = SettingKey[Option[String]]("git-head-commit", "The commit sha for the top commit of this project.")
     val gitDescribedVersion = SettingKey[Option[String]]("git-described-version", "Version as returned by `git describe --tags`.")
-
+    val gitUncommittedChanges = SettingKey[Boolean]("git-uncommitted-changes", "Whether there are uncommitted changes.")
+    
     // A Mechanism to run Git directly.
     val gitRunner = TaskKey[GitRunner]("git-runner", "The mechanism used to run git in the current build.")
 
@@ -28,7 +29,8 @@ object SbtGit extends Plugin {
     val gitTagToVersionNumber = SettingKey[String => Option[String]]("git-tag-to-version-number", "Converts a git tag string to a version number.")
     val baseVersion = SettingKey[String]("base-version", "The base version number which we will append the git version to.  May be left unspecified.")
     val versionProperty = SettingKey[String]("version-property", "The system property that can be used to override the version number.  Defaults to `project.version`.")
-
+    val uncommittedSignifier = SettingKey[Option[String]]("uncommitted-signifier", "Optional additional signifier to signify uncommitted changes")
+    
     // The remote repository we're using.
     val gitRemoteRepo = SettingKey[String]("git-remote-repo", "The remote git repository associated with this project")
   }
@@ -97,6 +99,9 @@ object SbtGit extends Plugin {
     gitCurrentBranch in ThisBuild <<= (gitReader in ThisBuild) apply { (reader) =>
       // TODO - Make current branch an option?
       Option(reader.withGit(_.branch)) getOrElse ""
+    },
+    gitUncommittedChanges in ThisBuild <<= (gitReader in ThisBuild) apply { (reader) =>
+      reader.withGit(_.hasUncommittedChanges)
     }
   )
   override val settings = Seq(
@@ -124,6 +129,7 @@ object SbtGit extends Plugin {
     Seq(
         gitTagToVersionNumber in ThisBuild := (git.defaultTagByVersionStrategy _),
         versionProperty in ThisBuild := "project.version",
+        uncommittedSignifier in ThisBuild := Some("SNAPSHOT"),
         useGitDescribe in ThisBuild := false,
         version in ThisBuild := {
           git.makeVersion(
@@ -133,7 +139,9 @@ object SbtGit extends Plugin {
             useGitDescribe = git.useGitDescribe.value,
             gitDescribedVersion = git.gitDescribedVersion.value,
             currentTags = git.gitCurrentTags.value,
-            releaseTagVersion = git.gitTagToVersionNumber.value
+            releaseTagVersion = git.gitTagToVersionNumber.value,
+            hasUncommittedChanges = git.gitUncommittedChanges.value, 
+            uncommittedSignifier = git.uncommittedSignifier.value
           )
         }
     )
@@ -152,6 +160,8 @@ object SbtGit extends Plugin {
     val gitTagToVersionNumber = GitKeys.gitTagToVersionNumber in ThisBuild
     val baseVersion = GitKeys.baseVersion in ThisBuild
     val versionProperty = GitKeys.versionProperty in ThisBuild
+    val gitUncommittedChanges = GitKeys.gitUncommittedChanges in ThisBuild
+    val uncommittedSignifier = GitKeys.uncommittedSignifier in ThisBuild
 
     def defaultTagByVersionStrategy(tag: String): Option[String] = {
       if(tag matches "v[0-9].*") Some(tag drop 1)
@@ -159,7 +169,7 @@ object SbtGit extends Plugin {
     }
     // Simple fall-through on how to define the project version.
     // TODO - Split this to use multiple settings, perhaps.
-    def makeVersion(versionProperty: String, baseVersion: Option[String], headCommit: Option[String], useGitDescribe:Boolean, gitDescribedVersion:Option[String], currentTags: Seq[String], releaseTagVersion: String => Option[String]): String = {
+    def makeVersion(versionProperty: String, baseVersion: Option[String], headCommit: Option[String], useGitDescribe:Boolean, gitDescribedVersion:Option[String], currentTags: Seq[String], releaseTagVersion: String => Option[String], hasUncommittedChanges: Boolean, uncommittedSignifier: Option[String]): String = {
       // The version string passed in via command line settings, if desired.
       def overrideVersion = Option(sys.props(versionProperty))
       // Version string that is computed from tags.
@@ -175,10 +185,11 @@ object SbtGit extends Plugin {
       def describedVersion: Option[String] = if(useGitDescribe) gitDescribedVersion else None
 
       val basePrefix = baseVersion.map(_ + "-").getOrElse("")
+      val signifierSuffix = uncommittedSignifier.map("-" + _).filter(_ => hasUncommittedChanges).getOrElse("")
       
       // Version string that just uses the commit version.
       def commitVersion: Option[String] =
-         headCommit map (sha => basePrefix + sha)
+         headCommit map (sha => basePrefix + sha + signifierSuffix)
       // Version string that just uses the full timestamp.
       def datedVersion: String = {
         val df = new java.text.SimpleDateFormat("yyyyMMdd'T'HHmmss")

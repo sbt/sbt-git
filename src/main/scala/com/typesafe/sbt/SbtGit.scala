@@ -40,8 +40,6 @@ object SbtGit extends Plugin {
       val (state2, runner) = extracted.runTask(GitKeys.gitRunner, state)
       val dir = extracted.get(baseDirectory)
       val result = runner(args:_*)(dir, state2.log)
-      // TODO - Best way to print to console?
-      println(result)
       state2
     }
 

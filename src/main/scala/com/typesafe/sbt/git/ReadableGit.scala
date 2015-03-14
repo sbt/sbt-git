@@ -15,6 +15,8 @@ trait GitReadonlyInterface {
   def currentTags: Seq[String]
   /** Version of the software as returned by `git describe --tags`. */
   def describedVersion: Option[String]
+  /** Whether there are uncommitted changes (i.e. whether any tracked file has changed) */
+  def hasUncommittedChanges: Boolean 
 }
 
 

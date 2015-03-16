@@ -1,32 +1,3 @@
-# Attention! This is a fork of https://github.com/sbt/sbt-git #
-
-We modified it to add customized verions formats, which in turns allow us to support rpm packaging.
-Refrain from making modifications, and note that we are in the process of getting a pull request
-to the original project.
-
-To use in your project, you need to have this plugin build on a repo, or on local. 
-
-To publish locally:
-1. clone our stash fork (not the original github project): git clone https://philippe.pascal@stash.corp.creditkarma.com/scm/serv/sbt-git.git (with your name)
-2. checkout the correct tag: cd sbt-git ; git checkout v0.6.5-CK
-3. publish it locally: sbt publishLocal
-
-Once it is published, add our special version 0.6.5-CK to your plugin.sbt like so:
-
-    resolvers += "jgit-repo" at "http://download.eclipse.org/jgit/maven"
-
-    addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.6.5-CK")
-
-To modify the formatter so that there is no dash (rpm doesn't like dash), add this to your build.sbt:
-
-    git.formatShaVersion := {(baseVersion:String, sha:String) =>
-      baseVersion + "." + sha 
-    }
-
-Note that we will soon have a pull request out to the origin project to stop maintaining our own copy.
-
-For all the other settings, refer to the original doc below:
-
 # sbt-git #
 
 The `sbt-git` plugin offers git command line features directly inside sbt as

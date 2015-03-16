@@ -28,12 +28,10 @@ object SbtGit {
     // Keys associated with setting a version number.
     val useGitDescribe = SettingKey[Boolean]("use-git-describe", "Get version by calling `git describe` on the repository")
     val gitTagToVersionNumber = SettingKey[String => Option[String]]("git-tag-to-version-number", "Converts a git tag string to a version number.")
-
     // TODO - instead of exposinv functions, we could possibly just have these be `Option[String]` that the user can override.
     //        WOuld be one less hop, conceptually, when overriding the values, and allow you to pull in any existing setting you want.
-    val formatShaVersion = SettingKey[(String,String, String) => String]("format-sha-version","Formats the version string when it's built with git sha.  Arguemnts are 'prefix', 'sha', 'suffix'.")
-    val formatDateVersion = SettingKey[(String,java.util.Date) => String]("format-date-version","Formats the version string when it's built with the current date.  Arguments are 'prefix', 'date'")
-
+    val formatShaVersion = SettingKey[(Option[String],String, String) => String]("format-sha-version","Formats the version string when it's built with git sha.  Arguemnts are 'prefix', 'sha', 'suffix'.")
+    val formatDateVersion = SettingKey[(Option[String],java.util.Date) => String]("format-date-version","Formats the version string when it's built with the current date.  Arguments are 'prefix', 'date'")
     val baseVersion = SettingKey[String]("base-version", "The base version number which we will append the git version to.")
     val versionProperty = SettingKey[String]("version-property", "The system property that can be used to override the version number.  Defaults to `project.version`.")
     val uncommittedSignifier = SettingKey[Option[String]]("uncommitted-signifier", "Optional additional signifier to signify uncommitted changes")
@@ -125,7 +123,7 @@ object SbtGit {
         uncommittedSignifier in ThisBuild := Some("SNAPSHOT"),
         useGitDescribe in ThisBuild := false,
         version in ThisBuild := {
-          val base = git.baseVersion.?.value.getOrElse("")
+          val base = git.baseVersion.?.value
           val overrideVersion =
             git.overrideVersion(git.versionProperty.value)
           val uncommittiedSuffix =
@@ -174,15 +172,15 @@ object SbtGit {
       if(tag matches "v[0-9].*") Some(tag drop 1)
       else None
     }
-    
-    def defaultFormatShaVersion(baseVersion:String, sha:String, suffix: String):String = {
-      baseVersion + "-" + sha + suffix
+
+    def defaultFormatShaVersion(baseVersion: Option[String], sha:String, suffix: String):String = {
+      baseVersion.map(_ +"-").getOrElse("") + sha + suffix
     }
     
-    def defaultFormatDateVersion(baseVersion:String, date:java.util.Date):String = {
+    def defaultFormatDateVersion(baseVersion:Option[String], date:java.util.Date):String = {
         val df = new java.text.SimpleDateFormat("yyyyMMdd'T'HHmmss")
         df setTimeZone java.util.TimeZone.getTimeZone("GMT")
-        baseVersion + "-" + (df format (new java.util.Date))
+        baseVersion.map(_ +"-").getOrElse("") + (df format (new java.util.Date))
     }
 
     def flaggedOptional(flag: Boolean, value: Option[String]): Option[String] =

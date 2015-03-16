@@ -7,6 +7,8 @@ import java.io.File
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.Ref
 
+import scala.util.Try
+
 
 // TODO - This class needs a bit more work, but at least it lets us use porcelain and wrap some higher-level
 // stuff on top of JGit, as needed for our plugin.
@@ -72,14 +74,27 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
         peeled.getObjectId
     id.getName
   }
+
+  override def describedVersion: Option[String] = {
+    Try { porcelain.describe().call() } toOption
+  }
+  
+  override def hasUncommittedChanges: Boolean = porcelain.status.call.hasUncommittedChanges
+  
 }
 
 object JGit {
 
   /** Creates a new git instance from a base directory. */
-  def apply(base: File) = new JGit({
-    new FileRepositoryBuilder().findGitDir(base).build
-  })
+  def apply(base: File) =
+    try (new JGit({
+      new FileRepositoryBuilder().findGitDir(base).build
+    })) catch {
+      // This is thrown if we never find the git base directory.  In that instance, we'll assume root is the base dir.
+      case e: IllegalArgumentException =>
+        val defaultGitDir = new File(base, ".git")
+        new JGit({ new FileRepositoryBuilder().setGitDir(defaultGitDir).build()})
+    }
 
   /** Clones from a given URI into a local directory of your choosing. */
   def clone(from: String, to: File, remoteName: String = "origin", cloneAllBranches: Boolean = true, bare: Boolean = false): JGit = {

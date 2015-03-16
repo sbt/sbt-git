@@ -37,9 +37,7 @@ well as allowing other plugins to make use of git.
 
 Add the following to your `project/plugins.sbt` or `~/.sbt/0.13/plugins/plugins.sbt` file:
 
-    resolvers += "jgit-repo" at "http://download.eclipse.org/jgit/maven"
-
-    addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.6.4")
+    addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.7.1")
 
 
 ### Using JGit ###
@@ -91,6 +89,11 @@ You can alter the tag-detection algorithm using the `git.gitTagToVersionNumber` 
       else None
     }
 
+You can turn on version detection using `git describe` command by adding:
+
+    git.useGitDescribe := true
+
+This way version returned will be last tag + number of commits since tag + short hash.
 
 ## Prompts ##
 

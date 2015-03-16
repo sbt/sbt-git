@@ -13,6 +13,10 @@ trait GitReadonlyInterface {
   def headCommitSha: Option[String]
   /** The current tags associated with the local repository (at its HEAD). */
   def currentTags: Seq[String]
+  /** Version of the software as returned by `git describe --tags`. */
+  def describedVersion: Option[String]
+  /** Whether there are uncommitted changes (i.e. whether any tracked file has changed) */
+  def hasUncommittedChanges: Boolean 
 }
 
 
@@ -22,5 +26,5 @@ final class DefaultReadableGit(base: sbt.File) extends ReadableGit {
   // For now, let's cache.
   private[this] val git = JGit(base)
   /** Use the git read-only interface. */
-  def withGit[A](f: GitReadonlyInterface => A): A   = f(git)
+  def withGit[A](f: GitReadonlyInterface => A): A = f(git)
 }

@@ -27,8 +27,8 @@ object SbtGit extends Plugin {
     // Keys associated with setting a version number.
     val useGitDescribe = SettingKey[Boolean]("use-git-describe", "Get version by calling `git describe` on the repository")
     val gitTagToVersionNumber = SettingKey[String => Option[String]]("git-tag-to-version-number", "Converts a git tag string to a version number.")
-    val formatShaVersion = SettingKey[(String,String,String) => String]("format-sha-version","Formats the version string when it's built with git sha.")
-    val formatDateVersion = SettingKey[(String,java.util.Date) => String]("format-date-version","Formats the version string when it's built with the current date.")
+    val formatShaVersion = SettingKey[(Option[String],String,Option[String]) => String]("format-sha-version","Formats the version string when it's built with git sha.")
+    val formatDateVersion = SettingKey[(Option[String],java.util.Date) => String]("format-date-version","Formats the version string when it's built with the current date.")
     val baseVersion = SettingKey[String]("base-version", "The base version number which we will append the git version to.  May be left unspecified.")
     val versionProperty = SettingKey[String]("version-property", "The system property that can be used to override the version number.  Defaults to `project.version`.")
     val uncommittedSignifier = SettingKey[Option[String]]("uncommitted-signifier", "Optional additional signifier to signify uncommitted changes")
@@ -176,14 +176,14 @@ object SbtGit extends Plugin {
       else None
     }
     
-    def defaultFormatShaVersion(baseVersion:String, sha:String, suffix:String):String = {
-      baseVersion + sha + suffix
+    def defaultFormatShaVersion(baseVersion:Option[String], sha:String, suffix:Option[String]):String = {
+      baseVersion.map(_ + "-").getOrElse("") + sha + suffix.map("-" + _).getOrElse("")
     }
     
-    def defaultFormatDateVersion(baseVersion:String, date:java.util.Date):String = {
+    def defaultFormatDateVersion(baseVersion:Option[String], date:java.util.Date):String = {
         val df = new java.text.SimpleDateFormat("yyyyMMdd'T'HHmmss")
         df setTimeZone java.util.TimeZone.getTimeZone("GMT")
-        baseVersion + (df format (new java.util.Date))
+        baseVersion.map(_ + "-").getOrElse("") + (df format (new java.util.Date))
     }
     
     // Simple fall-through on how to define the project version.
@@ -197,8 +197,8 @@ object SbtGit extends Plugin {
         releaseTagVersion: String => Option[String],
         hasUncommittedChanges: Boolean, 
         uncommittedSignifier: Option[String],
-        formatShaVersion: (String, String, String) => String,
-        formatDateVersion: (String, java.util.Date) => String): String = {
+        formatShaVersion: (Option[String], String, Option[String]) => String,
+        formatDateVersion: (Option[String], java.util.Date) => String): String = {
       // The version string passed in via command line settings, if desired.
       def overrideVersion = Option(sys.props(versionProperty))
       // Version string that is computed from tags.
@@ -212,16 +212,13 @@ object SbtGit extends Plugin {
         releaseVersions.reverse.headOption
       }
       def describedVersion: Option[String] = if(useGitDescribe) gitDescribedVersion else None
-
-      val basePrefix = baseVersion.map(_ + "-").getOrElse("")
-      val signifierSuffix = uncommittedSignifier.map("-" + _).filter(_ => hasUncommittedChanges).getOrElse("")
       
       // Version string that just uses the commit version.
       def commitVersion: Option[String] =
-         headCommit map (sha => formatShaVersion(basePrefix,sha,signifierSuffix))
+         headCommit map (sha => formatShaVersion(baseVersion,sha,uncommittedSignifier.filter(_ => hasUncommittedChanges)))
       // Version string that just uses the full timestamp.
       def datedVersion: String = {
-        formatDateVersion(basePrefix,new java.util.Date)
+        formatDateVersion(baseVersion,new java.util.Date)
       }
       //Now we fall through the potential version numbers...
       overrideVersion  orElse releaseVersion orElse describedVersion orElse commitVersion getOrElse datedVersion

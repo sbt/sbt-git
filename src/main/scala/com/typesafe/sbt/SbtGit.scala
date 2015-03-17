@@ -40,6 +40,9 @@ object SbtGit extends AutoPlugin {
   }
 
   object GitCommand {
+    import complete._
+    import complete.DefaultParsers._
+    
     val action: (State, Seq[String]) => State = { (state, args) =>
       val extracted = Project.extract(state)
       import extracted._
@@ -48,10 +51,27 @@ object SbtGit extends AutoPlugin {
       val result = runner(args:_*)(dir, state2.log)
       state2
     }
-
-    // <arg> is the suggestion printed for tab completion on an argument
-    val command: Command = Command.args("git", "<args>")(action)
-
+    
+    // the git command we expose to the user
+    val command: Command = Command("git")(s =>  fullCommand(s)){ (state, arg) =>
+      val (command, args) = arg
+      action(state, command +: args)
+    }
+    
+    // the parser providing auto-completion for git command
+    def fullCommand(state: State) = {
+      val extracted = Project.extract(state)
+      import extracted._
+      val reader = extracted.get(GitKeys.gitReader)
+      implicit val branches: Seq[String] = reader.withGit(_.branches) ++ reader.withGit(_.remoteBranches) :+ "HEAD"
+      // let's not forget the user can define its own git commands and aliases so we don't want to parse the command
+      // TODO we could though provide a list of available git commands
+      // TODO some git commands like add take filepaths as arguments
+      token(Space) ~> token(NotQuoted, "<command>") ~ (Space ~> token(branch)).*
+    }
+    
+    def branch(implicit branches: Seq[String]): Parser[String] = NotQuoted.examples(branches.toSet)
+    
     private def isGitRepo(dir: File): Boolean = {
       if (System.getenv("GIT_DIR") != null) true
       else isGitDir(dir)

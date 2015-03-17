@@ -17,6 +17,10 @@ trait GitReadonlyInterface {
   def describedVersion: Option[String]
   /** Whether there are uncommitted changes (i.e. whether any tracked file has changed) */
   def hasUncommittedChanges: Boolean 
+  /** The local branches */
+  def branches : Seq[String]
+  /** The remote branches */
+  def remoteBranches: Seq[String]
 }
 
 

@@ -15,14 +15,16 @@ object ConsoleGitRunner extends GitRunner {
   private lazy val cmd = if(isWindowsShell) Seq("cmd", "/c", "git") else Seq("git")
 
   // in order to enable colors we trick git into thinking we're a pager, because it already knows we're not a tty
-  val colorSupport = ("GIT_PAGER_IN_USE", "1")
+  val colorSupport: Seq[(String, String)] =
+    if(ConsoleLogger.formatEnabled) Seq("GIT_PAGER_IN_USE" -> "1")
+    else Seq.empty
 
   override def apply(args: String*)(cwd: File, log: Logger = ConsoleLogger()): String = {
     val gitLogger = new GitLogger(log)
     IO.createDirectory(cwd)
     val full = cmd ++ args
     log.debug(cwd + "$ " + full.mkString(" "))
-    val code = Process(full, cwd, colorSupport) ! gitLogger
+    val code = Process(full, cwd, colorSupport :_*) ! gitLogger
     val result = gitLogger.flush(code)
     if(code != 0)
       error("Nonzero exit code (" + code + ") running git.")

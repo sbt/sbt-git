@@ -124,7 +124,7 @@ object SbtGit {
         versionProperty in ThisBuild := "project.version",
         uncommittedSignifier in ThisBuild := Some("SNAPSHOT"),
         useGitDescribe in ThisBuild := false,
-        formattedShaVersion := {
+        formattedShaVersion in ThisBuild := {
           val base = git.baseVersion.?.value
           val suffix =
             git.makeUncommittedSignifierSuffix(git.gitUncommittedChanges.value, git.uncommittedSignifier.value)
@@ -132,7 +132,7 @@ object SbtGit {
             git.defaultFormatShaVersion(base, sha, suffix)
           }
         },
-        formattedDateVersion := {
+        formattedDateVersion in ThisBuild := {
           val base = git.baseVersion.?.value
           git.defaultFormatDateVersion(base, new java.util.Date)
         },
@@ -173,6 +173,9 @@ object SbtGit {
     val versionProperty = GitKeys.versionProperty in ThisBuild
     val gitUncommittedChanges = GitKeys.gitUncommittedChanges in ThisBuild
     val uncommittedSignifier = GitKeys.uncommittedSignifier in ThisBuild
+    val formattedShaVersion = GitKeys.formattedShaVersion in ThisBuild
+    val formattedDateVersion = GitKeys.formattedDateVersion in ThisBuild
+
 
     def defaultTagByVersionStrategy(tag: String): Option[String] = {
       if(tag matches "v[0-9].*") Some(tag drop 1)

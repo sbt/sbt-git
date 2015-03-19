@@ -28,10 +28,12 @@ object SbtGit {
     // Keys associated with setting a version number.
     val useGitDescribe = SettingKey[Boolean]("use-git-describe", "Get version by calling `git describe` on the repository")
     val gitTagToVersionNumber = SettingKey[String => Option[String]]("git-tag-to-version-number", "Converts a git tag string to a version number.")
-    // TODO - instead of exposinv functions, we could possibly just have these be `Option[String]` that the user can override.
-    //        WOuld be one less hop, conceptually, when overriding the values, and allow you to pull in any existing setting you want.
-    val formatShaVersion = SettingKey[(Option[String],String, String) => String]("format-sha-version","Formats the version string when it's built with git sha.  Arguemnts are 'prefix', 'sha', 'suffix'.")
-    val formatDateVersion = SettingKey[(Option[String],java.util.Date) => String]("format-date-version","Formats the version string when it's built with the current date.  Arguments are 'prefix', 'date'")
+
+    // Component version strings.  We use these when determining the actual version.
+    val formattedShaVersion = settingKey[Option[String]]("Completely formmated version string which will use the git SHA. Override this to change how the SHA version is formatted.")
+    val formattedDateVersion = settingKey[String]("Completely formatted version string which does not rely on git.  Used as a fallback.")
+
+    // Helper suffix/prefix information for generated default version strings.
     val baseVersion = SettingKey[String]("base-version", "The base version number which we will append the git version to.")
     val versionProperty = SettingKey[String]("version-property", "The system property that can be used to override the version number.  Defaults to `project.version`.")
     val uncommittedSignifier = SettingKey[Option[String]]("uncommitted-signifier", "Optional additional signifier to signify uncommitted changes")
@@ -122,6 +124,18 @@ object SbtGit {
         versionProperty in ThisBuild := "project.version",
         uncommittedSignifier in ThisBuild := Some("SNAPSHOT"),
         useGitDescribe in ThisBuild := false,
+        formattedShaVersion := {
+          val base = git.baseVersion.?.value
+          val suffix =
+            git.makeUncommittedSignifierSuffix(git.gitUncommittedChanges.value, git.uncommittedSignifier.value)
+          git.gitHeadCommit.value map { sha =>
+            git.defaultFormatShaVersion(base, sha, suffix)
+          }
+        },
+        formattedDateVersion := {
+          val base = git.baseVersion.?.value
+          git.defaultFormatDateVersion(base, new java.util.Date)
+        },
         version in ThisBuild := {
           val base = git.baseVersion.?.value
           val overrideVersion =
@@ -132,12 +146,8 @@ object SbtGit {
             git.releaseVersion(git.gitCurrentTags.value, git.gitTagToVersionNumber.value)
           val describedVersion =
             git.flaggedOptional(git.useGitDescribe.value, git.gitDescribedVersion.value)
-          val datedVersion =
-            git.formatDateVersion.value(base, new java.util.Date)
-          val commitVersion =
-            git.gitHeadCommit.value map { sha =>
-              git.formatShaVersion.value(base, sha, uncommittiedSuffix)
-            }
+          val datedVersion = formattedDateVersion.value
+          val commitVersion = formattedShaVersion.value
           //Now we fall through the potential version numbers...
           git.makeVersion(Seq(
              overrideVersion,
@@ -145,9 +155,7 @@ object SbtGit {
              describedVersion,
              commitVersion
           )) getOrElse datedVersion // For when git isn't there at all.
-        },
-        formatShaVersion in ThisBuild := (git.defaultFormatShaVersion _),
-        formatDateVersion in ThisBuild := (git.defaultFormatDateVersion _)
+        }
     )
 
   /** A holder of keys for simple config. */
@@ -161,8 +169,6 @@ object SbtGit {
     val gitCurrentTags = GitKeys.gitCurrentTags in ThisBuild
     val gitCurrentBranch = GitKeys.gitCurrentBranch in ThisBuild
     val gitTagToVersionNumber = GitKeys.gitTagToVersionNumber in ThisBuild
-    val formatShaVersion = GitKeys.formatShaVersion in ThisBuild
-    val formatDateVersion = GitKeys.formatDateVersion in ThisBuild
     val baseVersion = GitKeys.baseVersion in ThisBuild
     val versionProperty = GitKeys.versionProperty in ThisBuild
     val gitUncommittedChanges = GitKeys.gitUncommittedChanges in ThisBuild

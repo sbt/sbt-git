@@ -28,6 +28,8 @@ object SbtGit {
     // Keys associated with setting a version number.
     val useGitDescribe = SettingKey[Boolean]("use-git-describe", "Get version by calling `git describe` on the repository")
     val gitTagToVersionNumber = SettingKey[String => Option[String]]("git-tag-to-version-number", "Converts a git tag string to a version number.")
+    val formatShaVersion = SettingKey[(Option[String],String,Option[String]) => String]("format-sha-version","Formats the version string when it's built with git sha.")
+    val formatDateVersion = SettingKey[(Option[String],java.util.Date) => String]("format-date-version","Formats the version string when it's built with the current date.")
     val baseVersion = SettingKey[String]("base-version", "The base version number which we will append the git version to.  May be left unspecified.")
     val versionProperty = SettingKey[String]("version-property", "The system property that can be used to override the version number.  Defaults to `project.version`.")
     val uncommittedSignifier = SettingKey[Option[String]]("uncommitted-signifier", "Optional additional signifier to signify uncommitted changes")
@@ -115,6 +117,10 @@ object SbtGit {
   def versionWithGit: Seq[Setting[_]] =
     Seq(
         gitTagToVersionNumber in ThisBuild := (git.defaultTagByVersionStrategy _),
+
+        formatShaVersion in ThisBuild := (git.defaultFormatShaVersion _),
+        formatDateVersion in ThisBuild := (git.defaultFormatDateVersion _),
+        baseVersion in ThisBuild := "1.0",
         versionProperty in ThisBuild := "project.version",
         uncommittedSignifier in ThisBuild := Some("SNAPSHOT"),
         useGitDescribe in ThisBuild := false,
@@ -128,7 +134,9 @@ object SbtGit {
             currentTags = git.gitCurrentTags.value,
             releaseTagVersion = git.gitTagToVersionNumber.value,
             hasUncommittedChanges = git.gitUncommittedChanges.value, 
-            uncommittedSignifier = git.uncommittedSignifier.value
+            uncommittedSignifier = git.uncommittedSignifier.value,
+            formatShaVersion = git.formatShaVersion.value,
+            formatDateVersion = git.formatDateVersion.value
           )
         }
     )
@@ -144,6 +152,8 @@ object SbtGit {
     val gitCurrentTags = GitKeys.gitCurrentTags in ThisBuild
     val gitCurrentBranch = GitKeys.gitCurrentBranch in ThisBuild
     val gitTagToVersionNumber = GitKeys.gitTagToVersionNumber in ThisBuild
+    val formatShaVersion = GitKeys.formatShaVersion in ThisBuild
+    val formatDateVersion = GitKeys.formatDateVersion in ThisBuild
     val baseVersion = GitKeys.baseVersion in ThisBuild
     val versionProperty = GitKeys.versionProperty in ThisBuild
     val gitUncommittedChanges = GitKeys.gitUncommittedChanges in ThisBuild
@@ -153,9 +163,30 @@ object SbtGit {
       if(tag matches "v[0-9].*") Some(tag drop 1)
       else None
     }
+    
+    def defaultFormatShaVersion(baseVersion:Option[String], sha:String, suffix:Option[String]):String = {
+      baseVersion.map(_ + "-").getOrElse("") + sha + suffix.map("-" + _).getOrElse("")
+    }
+    
+    def defaultFormatDateVersion(baseVersion:Option[String], date:java.util.Date):String = {
+        val df = new java.text.SimpleDateFormat("yyyyMMdd'T'HHmmss")
+        df setTimeZone java.util.TimeZone.getTimeZone("GMT")
+        baseVersion.map(_ + "-").getOrElse("") + (df format (new java.util.Date))
+    }
+    
     // Simple fall-through on how to define the project version.
     // TODO - Split this to use multiple settings, perhaps.
-    def makeVersion(versionProperty: String, baseVersion: Option[String], headCommit: Option[String], useGitDescribe:Boolean, gitDescribedVersion:Option[String], currentTags: Seq[String], releaseTagVersion: String => Option[String], hasUncommittedChanges: Boolean, uncommittedSignifier: Option[String]): String = {
+    def makeVersion(versionProperty: String, 
+        baseVersion: Option[String], 
+        headCommit: Option[String], 
+        useGitDescribe:Boolean,
+        gitDescribedVersion:Option[String],
+        currentTags: Seq[String], 
+        releaseTagVersion: String => Option[String],
+        hasUncommittedChanges: Boolean, 
+        uncommittedSignifier: Option[String],
+        formatShaVersion: (Option[String], String, Option[String]) => String,
+        formatDateVersion: (Option[String], java.util.Date) => String): String = {
       // The version string passed in via command line settings, if desired.
       def overrideVersion = Option(sys.props(versionProperty))
       // Version string that is computed from tags.
@@ -169,18 +200,13 @@ object SbtGit {
         releaseVersions.reverse.headOption
       }
       def describedVersion: Option[String] = if(useGitDescribe) gitDescribedVersion else None
-
-      val basePrefix = baseVersion.map(_ + "-").getOrElse("")
-      val signifierSuffix = uncommittedSignifier.map("-" + _).filter(_ => hasUncommittedChanges).getOrElse("")
       
       // Version string that just uses the commit version.
       def commitVersion: Option[String] =
-         headCommit map (sha => basePrefix + sha + signifierSuffix)
+         headCommit map (sha => formatShaVersion(baseVersion,sha,uncommittedSignifier.filter(_ => hasUncommittedChanges)))
       // Version string that just uses the full timestamp.
       def datedVersion: String = {
-        val df = new java.text.SimpleDateFormat("yyyyMMdd'T'HHmmss")
-        df setTimeZone java.util.TimeZone.getTimeZone("GMT")
-        basePrefix + (df format (new java.util.Date))
+        formatDateVersion(baseVersion,new java.util.Date)
       }
       //Now we fall through the potential version numbers...
       overrideVersion  orElse releaseVersion orElse describedVersion orElse commitVersion getOrElse datedVersion

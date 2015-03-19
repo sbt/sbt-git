@@ -62,6 +62,9 @@ object SbtGit {
     }
 
     // the parser providing auto-completion for git command
+    // Note: This isn't an exact parser for git, it just tries to make it more convenient in sbt with a modicum of autocomplete.
+    // Ideally we'd use the bash autocompletion scripts or zsh ones for full and complete information, but this actually
+    // gives us a lot of bang for the buck.
     def fullCommand(state: State) = {
       val extracted = Project.extract(state)
       import extracted._

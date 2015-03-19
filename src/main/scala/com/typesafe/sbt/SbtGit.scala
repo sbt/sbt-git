@@ -28,7 +28,13 @@ object SbtGit {
     // Keys associated with setting a version number.
     val useGitDescribe = SettingKey[Boolean]("use-git-describe", "Get version by calling `git describe` on the repository")
     val gitTagToVersionNumber = SettingKey[String => Option[String]]("git-tag-to-version-number", "Converts a git tag string to a version number.")
-    val baseVersion = SettingKey[String]("base-version", "The base version number which we will append the git version to.  May be left unspecified.")
+
+    // Component version strings.  We use these when determining the actual version.
+    val formattedShaVersion = settingKey[Option[String]]("Completely formmated version string which will use the git SHA. Override this to change how the SHA version is formatted.")
+    val formattedDateVersion = settingKey[String]("Completely formatted version string which does not rely on git.  Used as a fallback.")
+
+    // Helper suffix/prefix information for generated default version strings.
+    val baseVersion = SettingKey[String]("base-version", "The base version number which we will append the git version to.")
     val versionProperty = SettingKey[String]("version-property", "The system property that can be used to override the version number.  Defaults to `project.version`.")
     val uncommittedSignifier = SettingKey[Option[String]]("uncommitted-signifier", "Optional additional signifier to signify uncommitted changes")
     
@@ -37,6 +43,9 @@ object SbtGit {
   }
 
   object GitCommand {
+    import complete._
+    import complete.DefaultParsers._
+
     val action: (State, Seq[String]) => State = { (state, args) =>
       val extracted = Project.extract(state)
       import extracted._
@@ -46,8 +55,28 @@ object SbtGit {
       state2
     }
 
-    // <arg> is the suggestion printed for tab completion on an argument
-    val command: Command = Command.args("git", "<args>")(action)
+    // the git command we expose to the user
+    val command: Command = Command("git")(s =>  fullCommand(s)){ (state, arg) =>
+      val (command, args) = arg
+      action(state, command +: args)
+    }
+
+    // the parser providing auto-completion for git command
+    // Note: This isn't an exact parser for git, it just tries to make it more convenient in sbt with a modicum of autocomplete.
+    // Ideally we'd use the bash autocompletion scripts or zsh ones for full and complete information, but this actually
+    // gives us a lot of bang for the buck.
+    def fullCommand(state: State) = {
+      val extracted = Project.extract(state)
+      import extracted._
+      val reader = extracted.get(GitKeys.gitReader)
+      implicit val branches: Seq[String] = reader.withGit(_.branches) ++ reader.withGit(_.remoteBranches) :+ "HEAD"
+      // let's not forget the user can define its own git commands and aliases so we don't want to parse the command
+      // TODO we could though provide a list of available git commands
+      // TODO some git commands like add take filepaths as arguments
+      token(Space) ~> token(NotQuoted, "<command>") ~ (Space ~> token(branch)).*
+    }
+
+    def branch(implicit branches: Seq[String]): Parser[String] = NotQuoted.examples(branches.toSet)
 
     private def isGitRepo(dir: File): Boolean = {
       if (System.getenv("GIT_DIR") != null) true
@@ -118,18 +147,37 @@ object SbtGit {
         versionProperty in ThisBuild := "project.version",
         uncommittedSignifier in ThisBuild := Some("SNAPSHOT"),
         useGitDescribe in ThisBuild := false,
+        formattedShaVersion in ThisBuild := {
+          val base = git.baseVersion.?.value
+          val suffix =
+            git.makeUncommittedSignifierSuffix(git.gitUncommittedChanges.value, git.uncommittedSignifier.value)
+          git.gitHeadCommit.value map { sha =>
+            git.defaultFormatShaVersion(base, sha, suffix)
+          }
+        },
+        formattedDateVersion in ThisBuild := {
+          val base = git.baseVersion.?.value
+          git.defaultFormatDateVersion(base, new java.util.Date)
+        },
         version in ThisBuild := {
-          git.makeVersion(
-            versionProperty=git.versionProperty.value,
-            baseVersion = git.baseVersion.?.value,
-            headCommit = git.gitHeadCommit.value,
-            useGitDescribe = git.useGitDescribe.value,
-            gitDescribedVersion = git.gitDescribedVersion.value,
-            currentTags = git.gitCurrentTags.value,
-            releaseTagVersion = git.gitTagToVersionNumber.value,
-            hasUncommittedChanges = git.gitUncommittedChanges.value, 
-            uncommittedSignifier = git.uncommittedSignifier.value
-          )
+          val base = git.baseVersion.?.value
+          val overrideVersion =
+            git.overrideVersion(git.versionProperty.value)
+          val uncommittiedSuffix =
+            git.makeUncommittedSignifierSuffix(git.gitUncommittedChanges.value, git.uncommittedSignifier.value)
+          val releaseVersion =
+            git.releaseVersion(git.gitCurrentTags.value, git.gitTagToVersionNumber.value)
+          val describedVersion =
+            git.flaggedOptional(git.useGitDescribe.value, git.gitDescribedVersion.value)
+          val datedVersion = formattedDateVersion.value
+          val commitVersion = formattedShaVersion.value
+          //Now we fall through the potential version numbers...
+          git.makeVersion(Seq(
+             overrideVersion,
+             releaseVersion,
+             describedVersion,
+             commitVersion
+          )) getOrElse datedVersion // For when git isn't there at all.
         }
     )
 
@@ -148,42 +196,45 @@ object SbtGit {
     val versionProperty = GitKeys.versionProperty in ThisBuild
     val gitUncommittedChanges = GitKeys.gitUncommittedChanges in ThisBuild
     val uncommittedSignifier = GitKeys.uncommittedSignifier in ThisBuild
+    val formattedShaVersion = GitKeys.formattedShaVersion in ThisBuild
+    val formattedDateVersion = GitKeys.formattedDateVersion in ThisBuild
+
 
     def defaultTagByVersionStrategy(tag: String): Option[String] = {
       if(tag matches "v[0-9].*") Some(tag drop 1)
       else None
     }
-    // Simple fall-through on how to define the project version.
-    // TODO - Split this to use multiple settings, perhaps.
-    def makeVersion(versionProperty: String, baseVersion: Option[String], headCommit: Option[String], useGitDescribe:Boolean, gitDescribedVersion:Option[String], currentTags: Seq[String], releaseTagVersion: String => Option[String], hasUncommittedChanges: Boolean, uncommittedSignifier: Option[String]): String = {
-      // The version string passed in via command line settings, if desired.
-      def overrideVersion = Option(sys.props(versionProperty))
-      // Version string that is computed from tags.
-      def releaseVersion: Option[String] = {
-        val releaseVersions =
-          for {
-            tag <- currentTags
-            version <- releaseTagVersion(tag)
-          } yield version
-        // NOTE - Selecting the last tag or the first tag should be an option.
-        releaseVersions.reverse.headOption
-      }
-      def describedVersion: Option[String] = if(useGitDescribe) gitDescribedVersion else None
 
-      val basePrefix = baseVersion.map(_ + "-").getOrElse("")
-      val signifierSuffix = uncommittedSignifier.map("-" + _).filter(_ => hasUncommittedChanges).getOrElse("")
-      
-      // Version string that just uses the commit version.
-      def commitVersion: Option[String] =
-         headCommit map (sha => basePrefix + sha + signifierSuffix)
-      // Version string that just uses the full timestamp.
-      def datedVersion: String = {
+    def defaultFormatShaVersion(baseVersion: Option[String], sha:String, suffix: String):String = {
+      baseVersion.map(_ +"-").getOrElse("") + sha + suffix
+    }
+    
+    def defaultFormatDateVersion(baseVersion:Option[String], date:java.util.Date):String = {
         val df = new java.text.SimpleDateFormat("yyyyMMdd'T'HHmmss")
         df setTimeZone java.util.TimeZone.getTimeZone("GMT")
-        basePrefix + (df format (new java.util.Date))
-      }
-      //Now we fall through the potential version numbers...
-      overrideVersion  orElse releaseVersion orElse describedVersion orElse commitVersion getOrElse datedVersion
+        baseVersion.map(_ +"-").getOrElse("") + (df format (new java.util.Date))
+    }
+
+    def flaggedOptional(flag: Boolean, value: Option[String]): Option[String] =
+      if(flag) value
+      else None
+
+    def makeUncommittedSignifierSuffix(hasUncommittedChanges: Boolean, uncommittedSignifier: Option[String]): String =
+      flaggedOptional(hasUncommittedChanges, uncommittedSignifier).map("-" + _).getOrElse("")
+
+    def releaseVersion(currentTags: Seq[String], releaseTagVersion: String => Option[String]): Option[String] = {
+      val releaseVersions =
+        for {
+          tag <- currentTags
+          version <- releaseTagVersion(tag)
+        } yield version
+      // NOTE - Selecting the last tag or the first tag should be an option.
+      releaseVersions.reverse.headOption
+    }
+    def overrideVersion(versionProperty: String) = Option(sys.props(versionProperty))
+
+    def makeVersion(versionPossibilities: Seq[Option[String]]): Option[String] = {
+      versionPossibilities.reduce(_ orElse _)
     }
   }
 }

@@ -6,10 +6,20 @@ well as allowing other plugins to make use of git.
 
 ## Installation ##
 
+
+Latest:
+
+Add the following to your `project/plugins.sbt` or `~/.sbt/0.13/plugins/plugins.sbt` file:
+
+   addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.8.0")
+
+Prior to sbt 0.13.5:
+
 Add the following to your `project/plugins.sbt` or `~/.sbt/0.13/plugins/plugins.sbt` file:
 
     addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.7.1")
 
+additionally, use one of the older README.md files: (https://github.com/sbt/sbt-git/blob/v0.7.1/README.md)
 
 ### Using JGit ###
 
@@ -34,15 +44,9 @@ git activities.
 
 ## Versioning with Git ##
 
-You can begin to use git to control your project versions.  To do so, simply add the
-following settings to your build (not necessary for every project), in **this specific order**:
+You can begin to use git to control your project versions.
 
-    import com.typesafe.sbt.SbtGit._
-
-    versionWithGit
-
-    // Optionally:
-    git.baseVersion := "0.1"
+    enablePlugins(GitVersioning)
 
 The git plugin will now autogenerate your version using the following rules, in order:
 
@@ -64,13 +68,14 @@ You can turn on version detection using `git describe` command by adding:
 
     git.useGitDescribe := true
 
-This way version returned will be last tag + number of commits since tag + short hash.
+This way version returned will be last tag + number of commits since tag + short hash.  We recommend adopting the git describe approach.
+
 
 ## Prompts ##
 
 You can use the git plugin to add the project name + the current branch to your prompt. Simply add this setting to every project:
 
-    showCurrentGitBranch
+    enablePlugins(GitBranchPrompt)
 
 ## Usage ##
 

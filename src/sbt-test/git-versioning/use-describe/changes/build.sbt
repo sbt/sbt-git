@@ -1,6 +1,4 @@
-import com.typesafe.sbt.SbtGit._
-
-versionWithGit
+enablePlugins(GitVersioning)
 
 git.baseVersion := "0.1"
 git.versionProperty := "DUMMY_BUILD_VERSION"

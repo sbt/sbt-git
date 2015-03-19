@@ -9,10 +9,7 @@ import com.typesafe.sbt.git.ReadableGit
 import com.typesafe.sbt.git.DefaultReadableGit
 
 /** This plugin has all the basic 'git' functionality for other plugins. */
-object SbtGit extends AutoPlugin {
-
-  override def requires = sbt.plugins.CorePlugin
-  override def trigger = allRequirements
+object SbtGit {
 
   object GitKeys {
     // Read-only git settings and values for use in other build settings.
@@ -84,7 +81,7 @@ object SbtGit extends AutoPlugin {
 
   // Build settings.
   import GitKeys._
-  override def buildSettings = Seq(
+  def buildSettings = Seq(
     gitReader := new DefaultReadableGit(baseDirectory.value),
     gitRunner := ConsoleGitRunner,
     gitHeadCommit := gitReader.value.withGit(_.headCommitSha),
@@ -93,7 +90,7 @@ object SbtGit extends AutoPlugin {
     gitCurrentBranch := Option(gitReader.value.withGit(_.branch)).getOrElse(""),
     gitUncommittedChanges in ThisBuild := gitReader.value.withGit(_.hasUncommittedChanges)
   )
-  override val projectSettings = Seq(
+  val projectSettings = Seq(
     // Input task to run git commands directly.
     commands += GitCommand.command
   )
@@ -189,6 +186,19 @@ object SbtGit extends AutoPlugin {
       overrideVersion  orElse releaseVersion orElse describedVersion orElse commitVersion getOrElse datedVersion
     }
   }
+}
+
+/** The autoplugin which adapts the old sbt plugin classes into a legitimate AutoPlugin.
+  *
+  * This will add the ability to call git directly in the sbt shell via a command, as well as add
+  * the infrastructure to read git properties.
+  *
+  * We keep the old SbtGit object around in an attempt not to break projects which depend on the old
+  * plugin directly.
+  */
+object GitPlugin extends AutoPlugin {
+  override def requires = sbt.plugins.CorePlugin
+  override def trigger = allRequirements
   // Note: In an attempt to pretend we are binary compatible, we current add this as an after thought.
   // In 1.0, we should deprecate/move the other meaans of getting these values.
   object autoImport {
@@ -197,15 +207,17 @@ object SbtGit extends AutoPlugin {
     def useJGit = SbtGit.useJGit
     def showCurrentGitBranch = SbtGit.showCurrentGitBranch
   }
+  override def buildSettings: Seq[Setting[_]] = SbtGit.buildSettings
+  override def projectSettings: Seq[Setting[_]] = SbtGit.projectSettings
 }
 
 /** Adapter to auto-enable git versioning.  i.e. the sbt 0.13.5+ mechanism of turning it on. */
 object GitVersioning extends AutoPlugin {
-  override def requires = sbt.plugins.IvyPlugin && SbtGit
-  override def projectSettings = SbtGit.autoImport.versionWithGit
+  override def requires = sbt.plugins.IvyPlugin && GitPlugin
+  override def projectSettings = GitPlugin.autoImport.versionWithGit
 }
 /** Adapter to enable the git prompt. i.e. rich prompt based on git info. */
 object GitBranchPrompt extends AutoPlugin {
-  override def requires = SbtGit
+  override def requires = GitPlugin
   override  def projectSettings = SbtGit.showCurrentGitBranch
 }

@@ -20,7 +20,7 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
 
   def branch: String = repo.getBranch
 
-  def branches: Seq[Ref] = {
+  private def branchesRef: Seq[Ref] = {
     import collection.JavaConverters._
     porcelain.branchList.call.asScala
   }
@@ -32,7 +32,7 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
 
   def checkoutBranch(branch: String): Unit = {
     // First, if remote branch exists, we auto-track it.
-    val exists = branches exists (_.getName == ("refs/heads/" + branch))
+    val exists = branchesRef exists (_.getName == ("refs/heads/" + branch))
     if(exists)  porcelain.checkout.setName(branch).call()
     else {
       // TODO - find upstream...
@@ -80,6 +80,14 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
   }
   
   override def hasUncommittedChanges: Boolean = porcelain.status.call.hasUncommittedChanges
+  
+  override def branches: Seq[String] = branchesRef.filter(_.getName.startsWith("refs/heads")).map(_.getName.drop(11))
+  
+  override def remoteBranches: Seq[String] = {
+    import collection.JavaConverters._
+    import org.eclipse.jgit.api.ListBranchCommand.ListMode
+    porcelain.branchList.setListMode(ListMode.REMOTE).call.asScala.filter(_.getName.startsWith("refs/remotes")).map(_.getName.drop(13))
+  }
   
 }
 

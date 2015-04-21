@@ -251,7 +251,7 @@ object GitPlugin extends AutoPlugin {
   override def requires = sbt.plugins.CorePlugin
   override def trigger = allRequirements
   // Note: In an attempt to pretend we are binary compatible, we current add this as an after thought.
-  // In 1.0, we should deprecate/move the other meaans of getting these values.
+  // In 1.0, we should deprecate/move the other means of getting these values.
   object autoImport {
     val git = SbtGit.git
     def versionWithGit = SbtGit.versionWithGit

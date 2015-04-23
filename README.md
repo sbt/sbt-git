@@ -1,5 +1,7 @@
 # sbt-git #
 
+[![Join the chat at https://gitter.im/sbt/sbt-git](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sbt/sbt-git?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 The `sbt-git` plugin offers git command line features directly inside sbt as
 well as allowing other plugins to make use of git.
 

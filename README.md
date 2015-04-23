@@ -13,7 +13,7 @@ Latest:
 
 Add the following to your `project/plugins.sbt` or `~/.sbt/0.13/plugins/plugins.sbt` file:
 
-    addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.8.0")
+    addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.8.3")
 
 Prior to sbt 0.13.5:
 

@@ -161,6 +161,9 @@ object SbtGit {
           val base = git.baseVersion.?.value
           git.defaultFormatDateVersion(base, new java.util.Date)
         },
+        isSnapshot in ThisBuild := {
+          git.gitCurrentTags.value.isEmpty
+        },
         version in ThisBuild := {
           val base = git.baseVersion.?.value
           val overrideVersion =

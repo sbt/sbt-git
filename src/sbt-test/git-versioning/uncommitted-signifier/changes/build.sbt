@@ -9,4 +9,5 @@ checkVersion := {
   assert(v startsWith "1.0", s"git.baseVersion is meant to be optional ${v}")
   assert(git.gitUncommittedChanges.value, s"SHould detect uncommitted git changes.")
   assert(v endsWith "-SNAPSHOT", s"Should have -SNAPSHOT appended when uncommitted changes. ${v}")
+  assert(isSnapshot.value == true, "-SNAPSHOT versions should have isSnapshot true.")
 }

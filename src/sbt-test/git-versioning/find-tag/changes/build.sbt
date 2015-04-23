@@ -11,4 +11,5 @@ checkVersion := {
   assert(tags == Seq("v1.0.0"), s"Failed to discover git tag, tags: $tags")
   assert(v2 == "1.0.0", s"Failed to detect git tag, found ${v}")
   assert(v == "1.0.0", s"Version from ThisBuild not used, found ${v}")
+  assert(isSnapshot.value == false, "For tagged git repos, snapshot should not be true.")
 }

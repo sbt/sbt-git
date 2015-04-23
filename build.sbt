@@ -2,7 +2,7 @@ sbtPlugin := true
 
 name := "sbt-git"
 organization := "com.typesafe.sbt"
-version := "0.8.2"
+version := "0.8.4-SNAPSHOT"
 
 libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit.pgm" % "3.7.0.201502260915-r"
 

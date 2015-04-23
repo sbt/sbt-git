@@ -61,6 +61,8 @@ object SbtGit {
       action(state, command +: args)
     }
 
+    val QuotedString: Parser[String] = (DQuoteClass ~> any.+.string.filter(!_.contains(DQuoteClass), _ => "Invalid quoted string") <~ DQuoteClass)
+    
     // the parser providing auto-completion for git command
     // Note: This isn't an exact parser for git, it just tries to make it more convenient in sbt with a modicum of autocomplete.
     // Ideally we'd use the bash autocompletion scripts or zsh ones for full and complete information, but this actually
@@ -73,7 +75,7 @@ object SbtGit {
       // let's not forget the user can define its own git commands and aliases so we don't want to parse the command
       // TODO we could though provide a list of available git commands
       // TODO some git commands like add take filepaths as arguments
-      token(Space) ~> token(NotQuoted, "<command>") ~ (Space ~> token(branch)).*
+      token(Space) ~> token(NotQuoted, "<command>") ~ (Space ~> token(branch | QuotedString)).*
     }
 
     def branch(implicit branches: Seq[String]): Parser[String] = NotQuoted.examples(branches.toSet)

@@ -171,7 +171,7 @@ object SbtGit {
           val uncommittiedSuffix =
             git.makeUncommittedSignifierSuffix(git.gitUncommittedChanges.value, git.uncommittedSignifier.value)
           val releaseVersion =
-            git.releaseVersion(git.gitCurrentTags.value, git.gitTagToVersionNumber.value)
+            git.releaseVersion(git.gitCurrentTags.value, git.gitTagToVersionNumber.value, uncommittiedSuffix)
           val describedVersion =
             git.flaggedOptional(git.useGitDescribe.value, git.gitDescribedVersion.value)
           val datedVersion = formattedDateVersion.value
@@ -227,12 +227,12 @@ object SbtGit {
     def makeUncommittedSignifierSuffix(hasUncommittedChanges: Boolean, uncommittedSignifier: Option[String]): String =
       flaggedOptional(hasUncommittedChanges, uncommittedSignifier).map("-" + _).getOrElse("")
 
-    def releaseVersion(currentTags: Seq[String], releaseTagVersion: String => Option[String]): Option[String] = {
+    def releaseVersion(currentTags: Seq[String], releaseTagVersion: String => Option[String], suffix: String): Option[String] = {
       val releaseVersions =
         for {
           tag <- currentTags
           version <- releaseTagVersion(tag)
-        } yield version
+        } yield version + suffix
       // NOTE - Selecting the last tag or the first tag should be an option.
       releaseVersions.reverse.headOption
     }

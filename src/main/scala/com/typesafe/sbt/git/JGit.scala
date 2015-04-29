@@ -13,8 +13,11 @@ import scala.util.Try
 // TODO - This class needs a bit more work, but at least it lets us use porcelain and wrap some higher-level
 // stuff on top of JGit, as needed for our plugin.
 final class JGit(val repo: Repository) extends GitReadonlyInterface {
+  
+  // forcing initialization of shallow commits to avoid concurrent modification issue. See issue #85
+  repo.getObjectDatabase.newReader.getShallowCommits()
+  
   val porcelain = new PGit(repo)
-
 
   def create(): Unit = repo.create()
 

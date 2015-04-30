@@ -15,8 +15,9 @@ import scala.util.Try
 final class JGit(val repo: Repository) extends GitReadonlyInterface {
   
   // forcing initialization of shallow commits to avoid concurrent modification issue. See issue #85
-  repo.getObjectDatabase.newReader.getShallowCommits()
-  
+  //repo.getObjectDatabase.newReader.getShallowCommits()
+  // Instead we've thrown a lock around sbt's usage of this class.
+
   val porcelain = new PGit(repo)
 
   def create(): Unit = repo.create()

@@ -270,7 +270,7 @@ object GitPlugin extends AutoPlugin {
 /** Adapter to auto-enable git versioning.  i.e. the sbt 0.13.5+ mechanism of turning it on. */
 object GitVersioning extends AutoPlugin {
   override def requires = sbt.plugins.IvyPlugin && GitPlugin
-  override def projectSettings = GitPlugin.autoImport.versionWithGit
+  override def buildSettings = GitPlugin.autoImport.versionWithGit
 }
 /** Adapter to enable the git prompt. i.e. rich prompt based on git info. */
 object GitBranchPrompt extends AutoPlugin {

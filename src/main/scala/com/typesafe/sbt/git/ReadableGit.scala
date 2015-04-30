@@ -30,5 +30,7 @@ final class DefaultReadableGit(base: sbt.File) extends ReadableGit {
   // For now, let's cache.
   private[this] val git = JGit(base)
   /** Use the git read-only interface. */
-  def withGit[A](f: GitReadonlyInterface => A): A = f(git)
+  def withGit[A](f: GitReadonlyInterface => A): A =
+    // JGit has concurrency issues so we synchronize access to it.
+    synchronized(f(git))
 }

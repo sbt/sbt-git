@@ -162,7 +162,7 @@ object SbtGit {
           git.defaultFormatDateVersion(base, new java.util.Date)
         },
         isSnapshot in ThisBuild := {
-          git.gitCurrentTags.value.isEmpty
+          git.gitCurrentTags.value.isEmpty || git.gitUncommittedChanges.value
         },
         version in ThisBuild := {
           val base = git.baseVersion.?.value

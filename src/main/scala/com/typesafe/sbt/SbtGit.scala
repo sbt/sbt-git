@@ -168,12 +168,12 @@ object SbtGit {
           val base = git.baseVersion.?.value
           val overrideVersion =
             git.overrideVersion(git.versionProperty.value)
-          val uncommittiedSuffix =
+          val uncommittedSuffix =
             git.makeUncommittedSignifierSuffix(git.gitUncommittedChanges.value, git.uncommittedSignifier.value)
           val releaseVersion =
-            git.releaseVersion(git.gitCurrentTags.value, git.gitTagToVersionNumber.value, uncommittiedSuffix)
+            git.releaseVersion(git.gitCurrentTags.value, git.gitTagToVersionNumber.value, uncommittedSuffix)
           val describedVersion =
-            git.flaggedOptional(git.useGitDescribe.value, git.gitDescribedVersion.value)
+            git.flaggedOptional(git.useGitDescribe.value, git.describeVersion(git.gitDescribedVersion.value, uncommittedSuffix))
           val datedVersion = formattedDateVersion.value
           val commitVersion = formattedShaVersion.value
           //Now we fall through the potential version numbers...
@@ -226,6 +226,10 @@ object SbtGit {
 
     def makeUncommittedSignifierSuffix(hasUncommittedChanges: Boolean, uncommittedSignifier: Option[String]): String =
       flaggedOptional(hasUncommittedChanges, uncommittedSignifier).map("-" + _).getOrElse("")
+
+    def describeVersion(gitDescribedVersion: Option[String], suffix: String): Option[String] = {
+      gitDescribedVersion.map(_ + suffix)
+    }
 
     def releaseVersion(currentTags: Seq[String], releaseTagVersion: String => Option[String], suffix: String): Option[String] = {
       val releaseVersions =

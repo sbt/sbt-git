@@ -4,6 +4,7 @@ enablePlugins(GitVersioning)
 
 git.baseVersion := "1.0"
 git.versionProperty := "DUMMY_BUILD_VERSION"
+git.useGitDescribe := true
 
 val checkVersionStartsWith = inputKey[Unit]("checks the version starts with what it should")
 checkVersionStartsWith := {

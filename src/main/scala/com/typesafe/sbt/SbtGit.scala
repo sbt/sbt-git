@@ -2,11 +2,7 @@ package com.typesafe.sbt
 
 import sbt._
 import Keys._
-import git.{ ConsoleGitRunner, GitRunner, JGitRunner, NullLogger }
-import scala.util.logging.ConsoleLogger
-import com.typesafe.sbt.git.GitRunner
-import com.typesafe.sbt.git.ReadableGit
-import com.typesafe.sbt.git.DefaultReadableGit
+import git.{ConsoleGitRunner, DefaultReadableGit, GitRunner, JGitRunner, ReadableGit}
 
 /** This plugin has all the basic 'git' functionality for other plugins. */
 object SbtGit {
@@ -48,10 +44,9 @@ object SbtGit {
 
     val action: (State, Seq[String]) => State = { (state, args) =>
       val extracted = Project.extract(state)
-      import extracted._
       val (state2, runner) = extracted.runTask(GitKeys.gitRunner, state)
       val dir = extracted.get(baseDirectory)
-      val result = runner(args:_*)(dir, state2.log)
+      runner(args:_*)(dir, state2.log)
       state2
     }
 
@@ -61,7 +56,7 @@ object SbtGit {
       action(state, command +: args)
     }
 
-    val QuotedString: Parser[String] = (DQuoteClass ~> any.+.string.filter(!_.contains(DQuoteClass), _ => "Invalid quoted string") <~ DQuoteClass)
+    val QuotedString: Parser[String] = DQuoteClass ~> any.+.string.filter(!_.contains(DQuoteClass), _ => "Invalid quoted string") <~ DQuoteClass
     
     // the parser providing auto-completion for git command
     // Note: This isn't an exact parser for git, it just tries to make it more convenient in sbt with a modicum of autocomplete.
@@ -69,7 +64,6 @@ object SbtGit {
     // gives us a lot of bang for the buck.
     def fullCommand(state: State) = {
       val extracted = Project.extract(state)
-      import extracted._
       val reader = extracted.get(GitKeys.gitReader)
       implicit val branches: Seq[String] = reader.withGit(_.branches) ++ reader.withGit(_.remoteBranches) :+ "HEAD"
       // let's not forget the user can define its own git commands and aliases so we don't want to parse the command
@@ -97,7 +91,6 @@ object SbtGit {
 
     val prompt: State => String = { state =>
       val extracted = Project.extract(state)
-      import extracted._
       val reader = extracted get GitKeys.gitReader
       val dir = extracted get baseDirectory
       val name = extracted get Keys.name
@@ -116,7 +109,7 @@ object SbtGit {
     gitReader := new DefaultReadableGit(baseDirectory.value),
     gitRunner := ConsoleGitRunner,
     gitHeadCommit := gitReader.value.withGit(_.headCommitSha),
-    gitTagToVersionNumber := (git.defaultTagByVersionStrategy _),
+    gitTagToVersionNumber := git.defaultTagByVersionStrategy,
     gitDescribedVersion := gitReader.value.withGit(_.describedVersion).map(v => git.gitTagToVersionNumber.value(v).getOrElse(v)),
     gitCurrentTags := gitReader.value.withGit(_.currentTags),
     gitCurrentBranch := Option(gitReader.value.withGit(_.branch)).getOrElse(""),
@@ -165,7 +158,6 @@ object SbtGit {
           git.gitCurrentTags.value.isEmpty || git.gitUncommittedChanges.value
         },
         version in ThisBuild := {
-          val base = git.baseVersion.?.value
           val overrideVersion =
             git.overrideVersion(git.versionProperty.value)
           val uncommittedSuffix =
@@ -205,7 +197,7 @@ object SbtGit {
     val formattedDateVersion = GitKeys.formattedDateVersion in ThisBuild
 
 
-    def defaultTagByVersionStrategy(tag: String): Option[String] = {
+    val defaultTagByVersionStrategy: String => Option[String] = { tag =>
       if(tag matches "v[0-9].*") Some(tag drop 1)
       else None
     }

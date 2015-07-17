@@ -116,7 +116,8 @@ object SbtGit {
     gitReader := new DefaultReadableGit(baseDirectory.value),
     gitRunner := ConsoleGitRunner,
     gitHeadCommit := gitReader.value.withGit(_.headCommitSha),
-    gitDescribedVersion := gitReader.value.withGit(_.describedVersion),
+    gitTagToVersionNumber := (git.defaultTagByVersionStrategy _),
+    gitDescribedVersion := gitReader.value.withGit(_.describedVersion).map(v => git.gitTagToVersionNumber.value(v).getOrElse(v)),
     gitCurrentTags := gitReader.value.withGit(_.currentTags),
     gitCurrentBranch := Option(gitReader.value.withGit(_.branch)).getOrElse(""),
     gitUncommittedChanges in ThisBuild := gitReader.value.withGit(_.hasUncommittedChanges)
@@ -145,7 +146,6 @@ object SbtGit {
    */
   def versionWithGit: Seq[Setting[_]] =
     Seq(
-        gitTagToVersionNumber in ThisBuild := (git.defaultTagByVersionStrategy _),
         versionProperty in ThisBuild := "project.version",
         uncommittedSignifier in ThisBuild := Some("SNAPSHOT"),
         useGitDescribe in ThisBuild := false,

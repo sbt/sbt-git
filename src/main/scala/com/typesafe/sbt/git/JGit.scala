@@ -79,11 +79,8 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
     id.getName
   }
 
-  override def describedVersion: Option[String] = Try(porcelain.describe().call()).toOption match {
-    case Some(null) => None
-    case r => r
-  }
-  
+  override def describedVersion: Option[String] = Try(Option(porcelain.describe().call())).getOrElse(None)
+
   override def hasUncommittedChanges: Boolean = porcelain.status.call.hasUncommittedChanges
   
   override def branches: Seq[String] = branchesRef.filter(_.getName.startsWith("refs/heads")).map(_.getName.drop(11))

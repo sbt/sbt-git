@@ -12,3 +12,8 @@ $ copy-file changes/build.sbt build.sbt
 > reload
 > checkVersionStartsWith 1.1
 > checkSnapshotVersion
+
+> git commit -m "test uncommited suffix using git describe (1.1-1-hash)"
+> git rm README.md
+> reload
+> checkSnapshotVersion

@@ -62,7 +62,7 @@ The `git.baseVersion` setting represents the in-development (upcoming) version y
 You can alter the tag-detection algorithm using the `git.gitTagToVersionNumber` setting. For example, if we wanted to alter the default version tag detection so it does not require a "v" at the start of tags, we could add the following setting:
 
     git.gitTagToVersionNumber := { tag: String =>
-      if(tag matches "[0.9]+\\..*") Some(tag)
+      if(tag matches "[0-9]+\\..*") Some(tag)
       else None
     }
 

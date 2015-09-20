@@ -8,8 +8,12 @@ enablePlugins(GitVersioning)
 git.baseVersion := "0.8"
 
 
-libraryDependencies += "org.eclipse.jgit" % "org.eclipse.jgit.pgm" % "3.7.0.201502260915-r"
-
+libraryDependencies ++= Seq(
+  "org.eclipse.jgit" % "org.eclipse.jgit.pgm" % "4.0.2.201509141540-r"
+    exclude("javax.jms", "jms")
+    exclude("com.sun.jdmk", "jmxtools")
+    exclude("com.sun.jmx", "jmxri")
+)
 publishMavenStyle := false
 
 

@@ -3,7 +3,7 @@ script:
   - sbt test
   - sbt scripted
 jdk:
-  - openjdk6
+  - openjdk7
 notifications:
   email:
     - joshua.suereth@typesafe.com

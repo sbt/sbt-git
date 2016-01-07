@@ -9,7 +9,7 @@ git.baseVersion := "0.8"
 
 
 libraryDependencies ++= Seq(
-  "org.eclipse.jgit" % "org.eclipse.jgit.pgm" % "4.0.2.201509141540-r"
+  "org.eclipse.jgit" % "org.eclipse.jgit.pgm" % "4.1.1.201511131810-r"
     exclude("javax.jms", "jms")
     exclude("com.sun.jdmk", "jmxtools")
     exclude("com.sun.jmx", "jmxri")

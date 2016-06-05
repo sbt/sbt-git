@@ -13,7 +13,7 @@ import scala.util.Try
 // TODO - This class needs a bit more work, but at least it lets us use porcelain and wrap some higher-level
 // stuff on top of JGit, as needed for our plugin.
 final class JGit(val repo: Repository) extends GitReadonlyInterface {
-  
+
   // forcing initialization of shallow commits to avoid concurrent modification issue. See issue #85
   //repo.getObjectDatabase.newReader.getShallowCommits()
   // Instead we've thrown a lock around sbt's usage of this class.
@@ -82,7 +82,7 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
   override def describedVersion: Option[String] = Try(Option(porcelain.describe().call())).getOrElse(None)
 
   override def hasUncommittedChanges: Boolean = porcelain.status.call.hasUncommittedChanges
-  
+
   override def branches: Seq[String] = branchesRef.filter(_.getName.startsWith("refs/heads")).map(_.getName.drop(11))
 
   override def remoteBranches: Seq[String] = {
@@ -91,6 +91,7 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
     porcelain.branchList.setListMode(ListMode.REMOTE).call.asScala.filter(_.getName.startsWith("refs/remotes")).map(_.getName.drop(13))
   }
 
+  override def headCommitMessage: Option[String] = Try(Option(porcelain.log().setMaxCount(1).call().iterator().next().getFullMessage)).toOption.flatten
 }
 
 object JGit {

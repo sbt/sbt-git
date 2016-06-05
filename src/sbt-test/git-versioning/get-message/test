@@ -1,0 +1,10 @@
+> git init
+> git config user.email "test@jsuereth.com"
+> git config user.name "Tester"
+> git add README.md
+$ copy-file changes/build.sbt build.sbt
+> reload
+> expectNoMessage
+> git commit -m "test message"
+> reload
+> expectAMessage

@@ -97,14 +97,14 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
 
   override def headCommitDate: Option[String] = {
     val walk = new RevWalk(repo)
-    headCommit.map({ id =>
+    headCommit.map { id =>
       val commit = walk.parseCommit(id)
       val seconds = commit.getCommitTime.toLong
       val millis = seconds * 1000L
       val format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
       format.setTimeZone(commit.getCommitterIdent.getTimeZone)
       format.format(new Date(millis))
-    })
+    }
   }
 }
 

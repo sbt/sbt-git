@@ -66,11 +66,10 @@ object JGitRunner extends GitRunner {
          val code = Fork.java(None, Seq("-classpath", cp, "org.eclipse.jgit.pgm.Main") ++ args, Some(cwd), CustomOutput(baos))
          val result = baos.toString
          log.info(result)
-         if(code == 0) result else error("Nonzero exit code (" + code + ") running JGit.")
+         if(code == 0) result else throw new MessageOnlyException("Nonzero exit code (" + code + ") running JGit.")
        case _ => sys.error("Could not find classpath for JGit!")
     }
 
   override def toString = "jgit"
 
 }
-

@@ -23,6 +23,8 @@ trait GitReadonlyInterface {
   def branches : Seq[String]
   /** The remote branches */
   def remoteBranches: Seq[String]
+  /** The message of current commit **/
+  def headCommitMessage: Option[String]
 }
 
 

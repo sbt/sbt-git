@@ -15,6 +15,7 @@ object SbtGit {
     val gitCurrentBranch = SettingKey[String]("git-current-branch", "The current branch for this project.")
     val gitCurrentTags = SettingKey[Seq[String]]("git-current-tags", "The tags associated with this commit.")
     val gitHeadCommit = SettingKey[Option[String]]("git-head-commit", "The commit sha for the top commit of this project.")
+    val gitHeadMessage = SettingKey[Option[String]]("git-head-message", "The message for the top commit of this project.")
     val gitHeadCommitDate = SettingKey[Option[String]]("git-head-commit-date", "The commit date for the top commit of this project in ISO-8601 format.")
     val gitDescribedVersion = SettingKey[Option[String]]("git-described-version", "Version as returned by `git describe --tags`.")
     val gitUncommittedChanges = SettingKey[Boolean]("git-uncommitted-changes", "Whether there are uncommitted changes.")
@@ -110,6 +111,7 @@ object SbtGit {
     gitReader := new DefaultReadableGit(baseDirectory.value),
     gitRunner := ConsoleGitRunner,
     gitHeadCommit := gitReader.value.withGit(_.headCommitSha),
+    gitHeadMessage := gitReader.value.withGit(_.headCommitMessage),
     gitHeadCommitDate := gitReader.value.withGit(_.headCommitDate),
     gitTagToVersionNumber := git.defaultTagByVersionStrategy,
     gitDescribedVersion := gitReader.value.withGit(_.describedVersion).map(v => git.gitTagToVersionNumber.value(v).getOrElse(v)),
@@ -186,6 +188,7 @@ object SbtGit {
     val branch = GitKeys.gitBranch
     val runner = GitKeys.gitRunner in ThisBuild
     val gitHeadCommit = GitKeys.gitHeadCommit in ThisBuild
+    val gitHeadMessage = GitKeys.gitHeadMessage in ThisBuild
     val gitHeadCommitDate = GitKeys.gitHeadCommitDate in ThisBuild
     val useGitDescribe = GitKeys.useGitDescribe in ThisBuild
     val gitDescribedVersion = GitKeys.gitDescribedVersion in ThisBuild

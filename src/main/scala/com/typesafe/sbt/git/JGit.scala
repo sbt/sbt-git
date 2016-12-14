@@ -95,6 +95,8 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
     porcelain.branchList.setListMode(ListMode.REMOTE).call.asScala.filter(_.getName.startsWith("refs/remotes")).map(_.getName.drop(13))
   }
 
+  override def headCommitMessage: Option[String] = Try(Option(porcelain.log().setMaxCount(1).call().iterator().next().getFullMessage)).toOption.flatten
+
   override def headCommitDate: Option[String] = {
     val walk = new RevWalk(repo)
     headCommit.map { id =>

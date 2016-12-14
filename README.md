@@ -116,8 +116,7 @@ SLF4J: Defaulting to no-operation (NOP) logger implementation
 SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
 ```
 
-To get rid of them, you can force the SLF4J no-op binder by adding `libraryDependencies += "org.slf4j" % "slf4j-nop" % "1.7.21"` to `.sbt/0.13/plugins/plugins.sbt`
-
+To get rid of them, you can force the SLF4J no-op binder by adding `libraryDependencies += "org.slf4j" % "slf4j-nop" % "1.7.21"` to `~/.sbt/0.13/plugins/plugins.sbt`
 
 ## Licensing ##
 

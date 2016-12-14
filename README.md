@@ -108,6 +108,17 @@ In an sbt prompt, simply enter any git command.  e.g.
     no changes added to commit (use "git add" and/or "git commit -a")
 
 
+## Known issues
+When running sbt, you will see the following warnings in console:
+```
+SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+SLF4J: Defaulting to no-operation (NOP) logger implementation
+SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+```
+
+To get rid of them, you can force the SLF4J no-op binder by adding `libraryDependencies += "org.slf4j" % "slf4j-nop" % "1.7.21"` to `.sbt/0.13/plugins/plugins.sbt`
+
+
 ## Licensing ##
 
 This software is licensed under the BSD license.

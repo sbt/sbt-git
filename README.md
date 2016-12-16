@@ -7,7 +7,7 @@ well as allowing other plugins to make use of git.
 
 
 ## Installation ##
-
+This plugin now requires at least **Java 7** (the latest version supporting Java 6 was `0.8.5`)
 
 Latest:
 

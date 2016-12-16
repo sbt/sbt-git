@@ -117,7 +117,18 @@ object SbtGit {
     gitDescribedVersion := gitReader.value.withGit(_.describedVersion).map(v => git.gitTagToVersionNumber.value(v).getOrElse(v)),
     gitCurrentTags := gitReader.value.withGit(_.currentTags),
     gitCurrentBranch := Option(gitReader.value.withGit(_.branch)).getOrElse(""),
-    gitUncommittedChanges in ThisBuild := gitReader.value.withGit(_.hasUncommittedChanges)
+    gitUncommittedChanges in ThisBuild := gitReader.value.withGit(_.hasUncommittedChanges),
+    scmInfo := {
+      val remote = """origin[ \t]+git@([^:]*):(.*)\.git[ \t]+\(fetch\)""".r
+      Process("git remote -v").lines_!.collect {
+        case remote(domain, repo) =>
+          ScmInfo(
+            url(s"https://$domain/$repo"),
+            s"scm:git:https://$domain/$repo.git",
+            Some(s"scm:git:git@$domain:$repo.git")
+          )
+      }.headOption
+    }
   )
   val projectSettings = Seq(
     // Input task to run git commands directly.

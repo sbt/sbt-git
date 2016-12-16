@@ -4,8 +4,12 @@ import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.api.{Git => PGit}
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.Ref
+import org.eclipse.jgit.revwalk.{RevCommit, RevWalk}
 
 import scala.util.Try
 
@@ -92,6 +96,18 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
   }
 
   override def headCommitMessage: Option[String] = Try(Option(porcelain.log().setMaxCount(1).call().iterator().next().getFullMessage)).toOption.flatten
+
+  override def headCommitDate: Option[String] = {
+    val walk = new RevWalk(repo)
+    headCommit.map { id =>
+      val commit = walk.parseCommit(id)
+      val seconds = commit.getCommitTime.toLong
+      val millis = seconds * 1000L
+      val format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
+      format.setTimeZone(commit.getCommitterIdent.getTimeZone)
+      format.format(new Date(millis))
+    }
+  }
 }
 
 object JGit {

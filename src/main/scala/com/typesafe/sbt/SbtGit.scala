@@ -16,9 +16,10 @@ object SbtGit {
     val gitCurrentTags = SettingKey[Seq[String]]("git-current-tags", "The tags associated with this commit.")
     val gitHeadCommit = SettingKey[Option[String]]("git-head-commit", "The commit sha for the top commit of this project.")
     val gitHeadMessage = SettingKey[Option[String]]("git-head-message", "The message for the top commit of this project.")
+    val gitHeadCommitDate = SettingKey[Option[String]]("git-head-commit-date", "The commit date for the top commit of this project in ISO-8601 format.")
     val gitDescribedVersion = SettingKey[Option[String]]("git-described-version", "Version as returned by `git describe --tags`.")
     val gitUncommittedChanges = SettingKey[Boolean]("git-uncommitted-changes", "Whether there are uncommitted changes.")
-    
+
     // A Mechanism to run Git directly.
     val gitRunner = TaskKey[GitRunner]("git-runner", "The mechanism used to run git in the current build.")
 
@@ -34,7 +35,7 @@ object SbtGit {
     val baseVersion = SettingKey[String]("base-version", "The base version number which we will append the git version to.")
     val versionProperty = SettingKey[String]("version-property", "The system property that can be used to override the version number.  Defaults to `project.version`.")
     val uncommittedSignifier = SettingKey[Option[String]]("uncommitted-signifier", "Optional additional signifier to signify uncommitted changes")
-    
+
     // The remote repository we're using.
     val gitRemoteRepo = SettingKey[String]("git-remote-repo", "The remote git repository associated with this project")
   }
@@ -58,7 +59,7 @@ object SbtGit {
     }
 
     val QuotedString: Parser[String] = DQuoteClass ~> any.+.string.filter(!_.contains(DQuoteClass), _ => "Invalid quoted string") <~ DQuoteClass
-    
+
     // the parser providing auto-completion for git command
     // Note: This isn't an exact parser for git, it just tries to make it more convenient in sbt with a modicum of autocomplete.
     // Ideally we'd use the bash autocompletion scripts or zsh ones for full and complete information, but this actually
@@ -111,6 +112,7 @@ object SbtGit {
     gitRunner := ConsoleGitRunner,
     gitHeadCommit := gitReader.value.withGit(_.headCommitSha),
     gitHeadMessage := gitReader.value.withGit(_.headCommitMessage),
+    gitHeadCommitDate := gitReader.value.withGit(_.headCommitDate),
     gitTagToVersionNumber := git.defaultTagByVersionStrategy,
     gitDescribedVersion := gitReader.value.withGit(_.describedVersion).map(v => git.gitTagToVersionNumber.value(v).getOrElse(v)),
     gitCurrentTags := gitReader.value.withGit(_.currentTags),
@@ -187,6 +189,7 @@ object SbtGit {
     val runner = GitKeys.gitRunner in ThisBuild
     val gitHeadCommit = GitKeys.gitHeadCommit in ThisBuild
     val gitHeadMessage = GitKeys.gitHeadMessage in ThisBuild
+    val gitHeadCommitDate = GitKeys.gitHeadCommitDate in ThisBuild
     val useGitDescribe = GitKeys.useGitDescribe in ThisBuild
     val gitDescribedVersion = GitKeys.gitDescribedVersion in ThisBuild
     val gitCurrentTags = GitKeys.gitCurrentTags in ThisBuild
@@ -208,7 +211,7 @@ object SbtGit {
     def defaultFormatShaVersion(baseVersion: Option[String], sha:String, suffix: String):String = {
       baseVersion.map(_ +"-").getOrElse("") + sha + suffix
     }
-    
+
     def defaultFormatDateVersion(baseVersion:Option[String], date:java.util.Date):String = {
         val df = new java.text.SimpleDateFormat("yyyyMMdd'T'HHmmss")
         df setTimeZone java.util.TimeZone.getTimeZone("GMT")

@@ -11,12 +11,14 @@ trait GitReadonlyInterface {
   def branch: String
   /** The current commit SHA of the local repository, or none. */
   def headCommitSha: Option[String]
+  /** The current commit date of the local repository in ISO-8601 format, or none. */
+  def headCommitDate: Option[String]
   /** The current tags associated with the local repository (at its HEAD). */
   def currentTags: Seq[String]
   /** Version of the software as returned by `git describe --tags`. */
   def describedVersion: Option[String]
   /** Whether there are uncommitted changes (i.e. whether any tracked file has changed) */
-  def hasUncommittedChanges: Boolean 
+  def hasUncommittedChanges: Boolean
   /** The local branches */
   def branches : Seq[String]
   /** The remote branches */

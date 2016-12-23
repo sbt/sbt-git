@@ -119,7 +119,8 @@ object SbtGit {
     gitCurrentBranch := Option(gitReader.value.withGit(_.branch)).getOrElse(""),
     gitUncommittedChanges in ThisBuild := gitReader.value.withGit(_.hasUncommittedChanges),
     scmInfo := {
-      val remote = """origin[ \t]+git@([^:]*):(.*)\.git[ \t]+\(fetch\)""".r
+      val remote = """origin[ \t]+(?:git@|https?\:\/\/)([^:\/]+)[:\/](.*)\.git[ \t]+\(fetch\)""".r
+      
       Process("git remote -v").lines_!.collect {
         case remote(domain, repo) =>
           ScmInfo(

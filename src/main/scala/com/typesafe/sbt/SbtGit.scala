@@ -119,16 +119,27 @@ object SbtGit {
     gitCurrentBranch := Option(gitReader.value.withGit(_.branch)).getOrElse(""),
     gitUncommittedChanges in ThisBuild := gitReader.value.withGit(_.hasUncommittedChanges),
     scmInfo := {
-      val remote = """origin[ \t]+(?:git@|https?\:\/\/)([^:\/]+)[:\/](.*)\.git[ \t]+\(fetch\)""".r
+      val user = """(?:[^@\/]+@)?"""
+      val domain = """([^\/]+)"""
+      val gitPath = """(.*)\.git\/?"""
+      val unauthenticated = raw"""(?:git|https?|ftps?)\:\/\/$domain\/$gitPath""".r
+      val ssh = raw"""ssh\:\/\/$user$domain\/$gitPath""".r
+      val headlessSSH = raw"""$user$domain:$gitPath""".r
       
-      Process("git remote -v").lines_!.collect {
-        case remote(domain, repo) =>
-          ScmInfo(
-            url(s"https://$domain/$repo"),
-            s"scm:git:https://$domain/$repo.git",
-            Some(s"scm:git:git@$domain:$repo.git")
-          )
-      }.headOption
+      def buildScmInfo(domain: String, repo: String) = Option(
+        ScmInfo(
+          url(s"https://$domain/$repo"),
+          s"scm:git:https://$domain/$repo.git",
+          Some(s"scm:git:git@$domain:$repo.git")
+        )
+      )
+
+      Process("git ls-remote --get-url origin").lines_!.head match {
+        case unauthenticated(domain, repo) => buildScmInfo(domain,repo)
+        case ssh(domain, repo) => buildScmInfo(domain,repo)
+        case headlessSSH(domain, repo) => buildScmInfo(domain,repo)
+	case _ => None
+      }
     }
   )
   val projectSettings = Seq(

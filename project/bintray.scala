@@ -20,7 +20,7 @@ object Bintray extends AutoPlugin {
       for {
         c <- creds
         if c.isInstanceOf[sbt.DirectCredentials]
-        val cred = c.asInstanceOf[sbt.DirectCredentials]
+        cred = c.asInstanceOf[sbt.DirectCredentials]
         if cred.host == "api.bintray.com"
       } yield cred.userName -> cred.passwd
 

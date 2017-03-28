@@ -1,12 +1,10 @@
+organization := "com.typesafe.sbt"
+name := "sbt-git"
+
 sbtPlugin := true
 
-name := "sbt-git"
-organization := "com.typesafe.sbt"
-
-
 enablePlugins(GitVersioning)
-git.baseVersion := "0.8"
-
+git.baseVersion := "0.9"
 
 libraryDependencies ++= Seq(
   "org.eclipse.jgit" % "org.eclipse.jgit.pgm" % "4.5.0.201609210915-r"
@@ -14,8 +12,6 @@ libraryDependencies ++= Seq(
     exclude("com.sun.jdmk", "jmxtools")
     exclude("com.sun.jmx", "jmxri")
 )
-publishMavenStyle := false
-
 
 scriptedSettings
 scriptedLaunchOpts += s"-Dproject.version=${version.value}"

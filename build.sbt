@@ -17,6 +17,7 @@ libraryDependencies ++= Seq(
     exclude("javax.jms", "jms")
     exclude("com.sun.jdmk", "jmxtools")
     exclude("com.sun.jmx", "jmxri")
+    exclude("org.slf4j", "slf4j-log4j12")
 )
 
 scriptedSettings

@@ -3,6 +3,7 @@ package com.typesafe.sbt
 import sbt._
 import Keys._
 import git.{ConsoleGitRunner, DefaultReadableGit, GitRunner, JGitRunner, ReadableGit}
+import sys.process.Process
 
 /** This plugin has all the basic 'git' functionality for other plugins. */
 object SbtGit {

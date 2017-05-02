@@ -2,6 +2,7 @@ package com.typesafe.sbt.git
 
 import sbt._
 import Keys._
+import sys.process.{ Process, ProcessLogger }
 
 /** A mechanism of running git that simply shells out to the console. */
 object ConsoleGitRunner extends GitRunner {
@@ -45,6 +46,10 @@ object ConsoleGitRunner extends GitRunner {
 
     def error(s: => String): Unit =
       synchronized { msgs += ((Error, s)) }
+
+    def err(s: => String): Unit = error(s)
+
+    def out(s: => String): Unit = info(s)
 
     def buffer[T](f: => T): T = f
 

@@ -4,6 +4,3 @@ script:
   - sbt scripted
 jdk:
   - openjdk7
-notifications:
-  email:
-    - joshua.suereth@typesafe.com

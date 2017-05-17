@@ -118,6 +118,14 @@ SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further detail
 
 To get rid of them, you can force the SLF4J no-op binder by adding `libraryDependencies += "org.slf4j" % "slf4j-nop" % "1.7.21"` to `~/.sbt/0.13/plugins/plugins.sbt`
 
+## Running the tests
+
+Tests for this plugin are written using `sbt-scripted`. Test can be executed with 
+
+```
+sbt scripted
+```
+
 ## Licensing ##
 
 This software is licensed under the BSD license.

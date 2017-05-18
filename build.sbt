@@ -13,12 +13,7 @@ enablePlugins(GitVersioning)
 git.baseVersion := "0.9"
 
 libraryDependencies ++= Seq(
-  "org.eclipse.jgit" % "org.eclipse.jgit.pgm" % "4.5.0.201609210915-r"
-    exclude("javax.jms", "jms")
-    exclude("com.sun.jdmk", "jmxtools")
-    exclude("com.sun.jmx", "jmxri")
-    exclude("org.slf4j", "slf4j-log4j12")
-    exclude("log4j", "log4j")
+  "org.eclipse.jgit" % "org.eclipse.jgit" % "4.5.0.201609210915-r"
 )
 
 scriptedSettings

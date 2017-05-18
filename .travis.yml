@@ -1,4 +1,21 @@
 language: scala
+sudo: false
+# apparently the hosts file needs to be prefilled
+# https://github.com/travis-ci/travis-ci/issues/5227#issuecomment-165131913
+addons:
+  hosts:
+    - myshorthost
+  hostname: myshorthost
+
+cache:
+  directories:
+    - $HOME/.ivy2/cache
+    - $HOME/.sbt/boot/
+before_cache:
+  # Tricks to avoid unnecessary cache updates
+  - find $HOME/.ivy2 -name "ivydata-*.properties" -delete
+  - find $HOME/.sbt -name "*.lock" -delete
+
 script:
   - sbt test
   - sbt scripted

@@ -1,4 +1,5 @@
 language: scala
+sudo: false
 # apparently the hosts file needs to be prefilled
 # https://github.com/travis-ci/travis-ci/issues/5227#issuecomment-165131913
 addons:

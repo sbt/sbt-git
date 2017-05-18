@@ -1,4 +1,10 @@
 language: scala
+# apparently the hosts file needs to be prefilled
+# https://github.com/travis-ci/travis-ci/issues/5227#issuecomment-165131913
+addons:
+  hosts:
+    - myshorthost
+  hostname: myshorthost
 script:
   - sbt test
   - sbt scripted

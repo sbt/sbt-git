@@ -17,21 +17,40 @@ scriptedSettings
 scriptedLaunchOpts += s"-Dproject.version=${version.value}"
 
 // Release
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+
 import ReleaseTransformations._
 
-// see https://github.com/sbt/sbt-release/issues/59
-val updateReadmeVersion: ReleaseStep = { s: State =>
-  val contents = IO.read(file("README.md"))
+import scala.io.{Codec, Source}
 
-  val p = Project.extract(s)
+val updateReadmeVersion = ReleaseStep { state =>
+  val vcs = Project.extract(state).get(releaseVcs).getOrElse {
+    sys.error("VCS not set")
+  }
+  val (releaseVer, _) = state.get(ReleaseKeys.versions).getOrElse {
+    sys.error(s"${ReleaseKeys.versions.label} key not set")
+  }
 
-  val pattern = "(\"" + p.get(organization) + "\"\\s+%+\\s+\"" + p.get(name) + "\"\\s+%\\s+\")[\\w\\.-]+(\")"
+  val baseDir = Project.extract(state).get(baseDirectory.in(ThisBuild))
+  val readmeFile = baseDir / "README.md"
 
-  val x = p.get(releaseVersion)
-  val newContents = contents.replaceAll(pattern, "$1" + p.get(releaseVersion) + "$2")
-  IO.write(file("README.md"), newContents)
+  val lines = Source.fromFile(readmeFile)(Codec.UTF8).getLines().toList
 
-  s
+  val markerText = "current version of sbt-git"
+  val lineNumberOfMarker = lines.indexWhere(_.contains(markerText))
+
+  if(lineNumberOfMarker == -1){
+    throw new RuntimeException(s"Could not find marker '$markerText' in file '${readmeFile.getPath}'")
+  }
+
+  val newLine = s"""    addSbtPlugin(\"com.typesafe.sbt\" % \"sbt-git\" % "$releaseVer""""
+  val newContent = lines.updated(lineNumberOfMarker + 1, newLine).mkString("\n")
+
+  Files.write(readmeFile.toPath, newContent.getBytes(StandardCharsets.UTF_8))
+  vcs.add(readmeFile.getAbsolutePath).!!(state.log)
+
+  state
 }
 
 def insertBeforeIn(seq: Seq[ReleaseStep], before: ReleaseStep, step: ReleaseStep) = {

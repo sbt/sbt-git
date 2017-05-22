@@ -12,7 +12,8 @@ This plugin now requires at least **Java 7** (the latest version supporting Java
 Latest:
 
 Add the following to your `project/plugins.sbt` or `~/.sbt/0.13/plugins/plugins.sbt` file:
-
+   
+    // current version of sbt-git
     addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.9.3")
 
 Prior to sbt 0.13.5:

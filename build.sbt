@@ -9,12 +9,50 @@ scmInfo := Some(ScmInfo(url("https://github.com/sbt/sbt-git"), "scm:git:git@gith
 
 sbtPlugin := true
 
-enablePlugins(GitVersioning)
-git.baseVersion := "0.9"
-
 libraryDependencies ++= Seq(
   "org.eclipse.jgit" % "org.eclipse.jgit" % "4.5.0.201609210915-r"
 )
 
 scriptedSettings
 scriptedLaunchOpts += s"-Dproject.version=${version.value}"
+
+// Release
+import ReleaseTransformations._
+
+// see https://github.com/sbt/sbt-release/issues/59
+val updateReadmeVersion: ReleaseStep = { s: State =>
+  val contents = IO.read(file("README.md"))
+
+  val p = Project.extract(s)
+
+  val pattern = "(\"" + p.get(organization) + "\"\\s+%+\\s+\"" + p.get(name) + "\"\\s+%\\s+\")[\\w\\.-]+(\")"
+
+  val x = p.get(releaseVersion)
+  val newContents = contents.replaceAll(pattern, "$1" + p.get(releaseVersion) + "$2")
+  IO.write(file("README.md"), newContents)
+
+  s
+}
+
+def insertBeforeIn(seq: Seq[ReleaseStep], before: ReleaseStep, step: ReleaseStep) = {
+  val (beforeStep, rest) =
+    seq.span(_ != before)
+
+  (beforeStep :+ step) ++ rest
+}
+
+releaseProcess := Seq[ReleaseStep](
+  checkSnapshotDependencies,
+  inquireVersions,
+  runClean,
+  runTest,
+  setReleaseVersion,
+  updateReadmeVersion,
+  commitReleaseVersion,
+  tagRelease,
+  publishArtifacts,
+  releaseStepTask(bintrayRelease in This),
+  setNextVersion,
+  commitNextVersion,
+  pushChanges
+)

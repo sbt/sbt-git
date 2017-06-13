@@ -2,6 +2,7 @@ package com.typesafe.sbt.git
 
 import sbt._
 import Keys._
+import Compat._
 
 /** A mechanism to run GIT using the pure java JGit implementation. */
 object JGitRunner extends GitRunner {
@@ -62,11 +63,9 @@ object JGitRunner extends GitRunner {
        case cl: java.net.URLClassLoader =>
          val cp = cl.getURLs map (_.getFile) mkString ":"
          val baos = new java.io.ByteArrayOutputStream
-			// NOTE: this will always return 0 until sbt 0.13.1 due to the use of CustomOutput
-         val code = Fork.java.fork(ForkOptions(
-          outputStrategy = Some(CustomOutput(baos)),
-          workingDirectory = Some(cwd)),
-          Vector("-classpath", cp, "org.eclipse.jgit.pgm.Main") ++ args).exitValue()
+         // NOTE: this will always return 0 until sbt 0.13.1 due to the use of CustomOutput
+         val code = Fork.java.fork(forkOpt(baos, cwd),
+           Vector("-classpath", cp, "org.eclipse.jgit.pgm.Main") ++ args).exitValue()
          val result = baos.toString
          log.info(result)
          if(code == 0) result else throw new MessageOnlyException("Nonzero exit code (" + code + ") running JGit.")

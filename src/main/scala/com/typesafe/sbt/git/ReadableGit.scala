@@ -15,6 +15,8 @@ trait GitReadonlyInterface {
   def headCommitDate: Option[String]
   /** The current tags associated with the local repository (at its HEAD). */
   def currentTags: Seq[String]
+  /** Tags reachable from HEAD, in order. */
+  def reachableTags: Seq[String]
   /** Version of the software as returned by `git describe --tags`. */
   def describedVersion: Option[String]
   /** Whether there are uncommitted changes (i.e. whether any tracked file has changed) */

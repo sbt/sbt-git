@@ -15,6 +15,7 @@ object SbtGit {
     val gitBranch = SettingKey[Option[String]]("git-branch", "Target branch of a git operation")
     val gitCurrentBranch = SettingKey[String]("git-current-branch", "The current branch for this project.")
     val gitCurrentTags = SettingKey[Seq[String]]("git-current-tags", "The tags associated with this commit.")
+    val gitReachableTags = SettingKey[Seq[String]]("git-reachable-tags", "The tags reachable from this commit.")
     val gitHeadCommit = SettingKey[Option[String]]("git-head-commit", "The commit sha for the top commit of this project.")
     val gitHeadMessage = SettingKey[Option[String]]("git-head-message", "The message for the top commit of this project.")
     val gitHeadCommitDate = SettingKey[Option[String]]("git-head-commit-date", "The commit date for the top commit of this project in ISO-8601 format.")
@@ -26,6 +27,7 @@ object SbtGit {
 
     // Keys associated with setting a version number.
     val useGitDescribe = SettingKey[Boolean]("use-git-describe", "Get version by calling `git describe` on the repository")
+    val useReachableTags = SettingKey[Boolean]("use-reachable-tags", "Looks for reachable tags, not just tags associated with the HEAD commit")
     val gitTagToVersionNumber = SettingKey[String => Option[String]]("git-tag-to-version-number", "Converts a git tag string to a version number.")
 
     // Component version strings.  We use these when determining the actual version.
@@ -117,6 +119,7 @@ object SbtGit {
     gitTagToVersionNumber := git.defaultTagByVersionStrategy,
     gitDescribedVersion := gitReader.value.withGit(_.describedVersion).map(v => git.gitTagToVersionNumber.value(v).getOrElse(v)),
     gitCurrentTags := gitReader.value.withGit(_.currentTags),
+    gitReachableTags := gitReader.value.withGit(_.reachableTags),
     gitCurrentBranch := Option(gitReader.value.withGit(_.branch)).getOrElse(""),
     gitUncommittedChanges in ThisBuild := gitReader.value.withGit(_.hasUncommittedChanges),
     scmInfo := {
@@ -190,8 +193,9 @@ object SbtGit {
             git.overrideVersion(git.versionProperty.value)
           val uncommittedSuffix =
             git.makeUncommittedSignifierSuffix(git.gitUncommittedChanges.value, git.uncommittedSignifier.value)
+          val tagsToTry = if (git.useReachableTags.value) git.gitReachableTags.value else git.gitCurrentTags.value
           val releaseVersion =
-            git.releaseVersion(git.gitCurrentTags.value, git.gitTagToVersionNumber.value, uncommittedSuffix)
+            git.releaseVersion(tagsToTry, git.gitTagToVersionNumber.value, git.useReachableTags.value, uncommittedSuffix)
           val describedVersion =
             git.flaggedOptional(git.useGitDescribe.value, git.describeVersion(git.gitDescribedVersion.value, uncommittedSuffix))
           val datedVersion = formattedDateVersion.value
@@ -215,8 +219,10 @@ object SbtGit {
     val gitHeadMessage = GitKeys.gitHeadMessage in ThisBuild
     val gitHeadCommitDate = GitKeys.gitHeadCommitDate in ThisBuild
     val useGitDescribe = GitKeys.useGitDescribe in ThisBuild
+    val useReachableTags = GitKeys.useReachableTags in ThisBuild
     val gitDescribedVersion = GitKeys.gitDescribedVersion in ThisBuild
     val gitCurrentTags = GitKeys.gitCurrentTags in ThisBuild
+    val gitReachableTags = GitKeys.gitReachableTags in ThisBuild
     val gitCurrentBranch = GitKeys.gitCurrentBranch in ThisBuild
     val gitTagToVersionNumber = GitKeys.gitTagToVersionNumber in ThisBuild
     val baseVersion = GitKeys.baseVersion in ThisBuild
@@ -253,14 +259,16 @@ object SbtGit {
       gitDescribedVersion.map(_ + suffix)
     }
 
-    def releaseVersion(currentTags: Seq[String], releaseTagVersion: String => Option[String], suffix: String): Option[String] = {
+    def releaseVersion(currentTags: Seq[String], releaseTagVersion: String => Option[String], useFirstTagFound: Boolean, suffix: String): Option[String] = {
       val releaseVersions =
         for {
           tag <- currentTags
           version <- releaseTagVersion(tag)
         } yield version + suffix
-      // NOTE - Selecting the last tag or the first tag should be an option.
-      releaseVersions.reverse.headOption
+      if (useFirstTagFound)
+        releaseVersions.headOption
+      else
+        releaseVersions.reverse.headOption
     }
     def overrideVersion(versionProperty: String) = Option(sys.props(versionProperty))
 

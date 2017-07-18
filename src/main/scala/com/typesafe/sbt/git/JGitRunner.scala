@@ -64,8 +64,13 @@ object JGitRunner extends GitRunner {
          val baos = new java.io.ByteArrayOutputStream
 			// NOTE: this will always return 0 until sbt 0.13.1 due to the use of CustomOutput
          val code = Fork.java.fork(ForkOptions(
-          outputStrategy = Some(CustomOutput(baos)),
-          workingDirectory = Some(cwd)),
+          javaHome = Option.empty[java.io.File],
+          outputStrategy = Option[OutputStrategy](CustomOutput(baos)),
+          bootJars = Vector.empty[java.io.File],
+          workingDirectory = Option(cwd),
+          runJVMOptions = Vector.empty[String],
+          connectInput = false,
+          envVars = Map.empty[String, String]),
           Vector("-classpath", cp, "org.eclipse.jgit.pgm.Main") ++ args).exitValue()
          val result = baos.toString
          log.info(result)

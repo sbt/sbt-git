@@ -9,6 +9,6 @@ sbt
 jenv shell 1.8
 sbt
 > clean
-> ^^1.0.0-RC2
+> ^^1.0.0-RC3
 > publish
 ```

@@ -18,3 +18,7 @@ libraryDependencies ++= Seq(
 
 scriptedSettings
 scriptedLaunchOpts += s"-Dproject.version=${version.value}"
+
+bintrayOrganization := Some("sbt")
+bintrayRepository := "sbt-plugin-releases"
+bintrayPackage := "sbt-git-common"

@@ -13,7 +13,7 @@ enablePlugins(GitVersioning)
 git.baseVersion := "0.9"
 
 libraryDependencies ++= Seq(
-  "org.eclipse.jgit" % "org.eclipse.jgit" % "4.5.0.201609210915-r"
+  "org.eclipse.jgit" % "org.eclipse.jgit" % "4.8.0.201706111038-r"
 )
 
 scriptedSettings

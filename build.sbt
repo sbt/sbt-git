@@ -8,6 +8,7 @@ homepage := scmInfo.value map (_.browseUrl)
 scmInfo := Some(ScmInfo(url("https://github.com/sbt/sbt-git"), "scm:git:git@github.com:sbt/sbt-git.git"))
 
 sbtPlugin := true
+crossSbtVersions := Seq("0.13.16", "1.0.2")
 
 enablePlugins(GitVersioning)
 git.baseVersion := "0.9"
@@ -16,5 +17,4 @@ libraryDependencies ++= Seq(
   "org.eclipse.jgit" % "org.eclipse.jgit" % "4.5.0.201609210915-r"
 )
 
-scriptedSettings
 scriptedLaunchOpts += s"-Dproject.version=${version.value}"

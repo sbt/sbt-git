@@ -139,7 +139,7 @@ object SbtGit {
         case unauthenticated(domain, repo) => buildScmInfo(domain,repo)
         case ssh(domain, repo) => buildScmInfo(domain,repo)
         case headlessSSH(domain, repo) => buildScmInfo(domain,repo)
-	      case _ => None
+        case _ => None
       }
     }
   )

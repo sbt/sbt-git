@@ -135,11 +135,11 @@ object SbtGit {
         )
       )
 
-      Process("git ls-remote --get-url origin").lines_!.head match {
+      gitReader.value.withGit(_.remoteOrigin) match {
         case unauthenticated(domain, repo) => buildScmInfo(domain,repo)
         case ssh(domain, repo) => buildScmInfo(domain,repo)
         case headlessSSH(domain, repo) => buildScmInfo(domain,repo)
-	case _ => None
+	      case _ => None
       }
     }
   )

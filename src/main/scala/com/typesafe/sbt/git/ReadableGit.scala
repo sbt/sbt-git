@@ -23,6 +23,8 @@ trait GitReadonlyInterface {
   def branches : Seq[String]
   /** The remote branches */
   def remoteBranches: Seq[String]
+  /** The remote origin as returned by `git ls-remote --get-url origin`. */
+  def remoteOrigin: String
   /** The message of current commit **/
   def headCommitMessage: Option[String]
 }

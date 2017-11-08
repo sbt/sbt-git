@@ -7,13 +7,14 @@ well as allowing other plugins to make use of git.
 
 
 ## Installation ##
-This plugin now requires at least **Java 8** (the latest version supporting Java 7 was `0.9.3`)
+As of `0.10.0` (not released yet) this plugin requires at least **Java 8**.
+The latest version supporting Java 7 was `0.9.3`, while the latest version supporting Java 6 was `0.8.5`.
 
 Latest:
 
 Add the following to your `project/plugins.sbt` or `~/.sbt/0.13/plugins/plugins.sbt` file:
 
-    addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.10.0")
+    addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.9.3")
 
 Prior to sbt 0.13.5:
 

@@ -64,10 +64,10 @@ object JGitRunner extends GitRunner {
          val baos = new java.io.ByteArrayOutputStream
 			// NOTE: this will always return 0 until sbt 0.13.1 due to the use of CustomOutput
          val code = Fork.java.fork(ForkOptions(
-          javaHome = Option.empty[java.io.File],
-          outputStrategy = Option[OutputStrategy](CustomOutput(baos)),
-          bootJars = Vector.empty[java.io.File],
-          workingDirectory = Option(cwd),
+          javaHome = None,
+          outputStrategy = Some(CustomOutput(baos)),
+          bootJars = Vector.empty[File],
+          workingDirectory = Some(cwd),
           runJVMOptions = Vector.empty[String],
           connectInput = false,
           envVars = Map.empty[String, String]),

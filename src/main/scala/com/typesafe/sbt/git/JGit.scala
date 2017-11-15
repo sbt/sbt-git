@@ -59,7 +59,6 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
     headCommit map (_.name)
 
   def currentTags: Seq[String] = {
-    import collection.JavaConverters._
     for {
       hash <- headCommit.map(_.name).toSeq
       unpeeledTag <- tags
@@ -70,6 +69,20 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
     } yield ref drop 10
   }
 
+  def reachableTags: Seq[String] = {
+    import collection.JavaConverters._
+    val tagsForHash: Map[String, Seq[String]] = hashToTags
+    for {
+      historicalHash <- porcelain.log().call().asScala.map(_.getId.getName).toSeq
+      if tagsForHash.contains(historicalHash)
+      tag <- tagsForHash(historicalHash)
+    } yield tag
+  }
+
+  def hashToTags: Map[String, Seq[String]] = {
+    val hashToTagNameTuples: Seq[(String, String)] = tags.map(tag => (tagHash(tag), tag.getName.replaceAll("^refs/tags/", "")))
+    hashToTagNameTuples.groupBy(_._1).map { case (k,v) => (k,v.map(_._2))}
+  }
 
   def tagHash(tag: Ref) = {
     // Annotated (signed) and plain tags work differently,

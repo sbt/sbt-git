@@ -26,10 +26,11 @@ object SbtGit {
 
     // Keys associated with setting a version number.
     val useGitDescribe = SettingKey[Boolean]("use-git-describe", "Get version by calling `git describe` on the repository")
+    val gitDescribePatterns = SettingKey[Seq[String]]("git-describe-patterns", "Patterns to `--match` against when using `git describe`")
     val gitTagToVersionNumber = SettingKey[String => Option[String]]("git-tag-to-version-number", "Converts a git tag string to a version number.")
 
     // Component version strings.  We use these when determining the actual version.
-    val formattedShaVersion = settingKey[Option[String]]("Completely formmated version string which will use the git SHA. Override this to change how the SHA version is formatted.")
+    val formattedShaVersion = settingKey[Option[String]]("Completely formatted version string which will use the git SHA. Override this to change how the SHA version is formatted.")
     val formattedDateVersion = settingKey[String]("Completely formatted version string which does not rely on git.  Used as a fallback.")
 
     // Helper suffix/prefix information for generated default version strings.
@@ -115,7 +116,8 @@ object SbtGit {
     gitHeadMessage := gitReader.value.withGit(_.headCommitMessage),
     gitHeadCommitDate := gitReader.value.withGit(_.headCommitDate),
     gitTagToVersionNumber := git.defaultTagByVersionStrategy,
-    gitDescribedVersion := gitReader.value.withGit(_.describedVersion).map(v => git.gitTagToVersionNumber.value(v).getOrElse(v)),
+    gitDescribePatterns := Seq.empty[String],
+    gitDescribedVersion := gitReader.value.withGit(_.describedVersion(git.gitDescribePatterns.value)).map(v => git.gitTagToVersionNumber.value(v).getOrElse(v)),
     gitCurrentTags := gitReader.value.withGit(_.currentTags),
     gitCurrentBranch := Option(gitReader.value.withGit(_.branch)).getOrElse(""),
     gitUncommittedChanges in ThisBuild := gitReader.value.withGit(_.hasUncommittedChanges),
@@ -215,6 +217,7 @@ object SbtGit {
     val gitHeadMessage = GitKeys.gitHeadMessage in ThisBuild
     val gitHeadCommitDate = GitKeys.gitHeadCommitDate in ThisBuild
     val useGitDescribe = GitKeys.useGitDescribe in ThisBuild
+    val gitDescribePatterns = GitKeys.gitDescribePatterns in ThisBuild
     val gitDescribedVersion = GitKeys.gitDescribedVersion in ThisBuild
     val gitCurrentTags = GitKeys.gitCurrentTags in ThisBuild
     val gitCurrentBranch = GitKeys.gitCurrentBranch in ThisBuild

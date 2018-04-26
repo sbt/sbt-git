@@ -17,7 +17,7 @@ trait GitReadonlyInterface {
   def currentTags: Seq[String]
   /** Version of the software as returned by `git describe --tags`.  Any patterns provided are used as per `--match` */
   def describedVersion: Option[String]
-  def describedVersion(patterns: Seq[String] = Seq.empty): Option[String]
+  def describedVersion(patterns: Seq[String]): Option[String] = describedVersion // for backwards compatibility
   /** Whether there are uncommitted changes (i.e. whether any tracked file has changed) */
   def hasUncommittedChanges: Boolean
   /** The local branches */

@@ -10,7 +10,7 @@ scmInfo := Some(ScmInfo(url("https://github.com/sbt/sbt-git"), "scm:git:git@gith
 sbtPlugin := true
 
 enablePlugins(GitVersioning)
-git.baseVersion := "0.9"
+git.baseVersion := "1.0"
 
 libraryDependencies ++= Seq(
   "org.eclipse.jgit" % "org.eclipse.jgit" % "4.9.0.201710071750-r"

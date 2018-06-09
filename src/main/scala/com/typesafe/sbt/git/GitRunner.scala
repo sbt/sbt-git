@@ -9,7 +9,7 @@ trait GitRunner {
    */
   def apply(args: String*)(cwd: File, log: Logger): String
   /** Commits all local changes and pushes the new commit to a remote repository. */
-  def commitAndPush(msg: String, tag: Option[String] = None)(repo: File, log: Logger) {
+  def commitAndPush(msg: String, tag: Option[String] = None)(repo: File, log: Logger): Unit = {
     apply("add", ".")(repo, log)
     apply("commit", "-m", msg, "--allow-empty")(repo, log)
     for(tagString <- tag) apply("tag", tagString)(repo, log)

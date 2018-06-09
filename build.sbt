@@ -8,7 +8,7 @@ homepage := scmInfo.value map (_.browseUrl)
 scmInfo := Some(ScmInfo(url("https://github.com/sbt/sbt-git"), "scm:git:git@github.com:sbt/sbt-git.git"))
 
 sbtPlugin := true
-crossSbtVersions := List("0.13.16", "1.1.0")
+crossSbtVersions := List("0.13.16", "1.1.6")
 
 enablePlugins(GitVersioning)
 git.baseVersion := "1.0"

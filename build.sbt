@@ -7,10 +7,9 @@ startYear := Some(2011)
 homepage := scmInfo.value map (_.browseUrl)
 scmInfo := Some(ScmInfo(url("https://github.com/sbt/sbt-git"), "scm:git:git@github.com:sbt/sbt-git.git"))
 
-sbtPlugin := true
 crossSbtVersions := List("0.13.17", "1.1.5")
 
-enablePlugins(GitVersioning)
+enablePlugins(GitVersioning, SbtPlugin)
 git.baseVersion := "1.0"
 
 libraryDependencies ++= Seq(

@@ -13,7 +13,7 @@ enablePlugins(GitVersioning, SbtPlugin)
 git.baseVersion := "1.0"
 
 libraryDependencies ++= Seq(
-  "org.eclipse.jgit" % "org.eclipse.jgit" % "4.9.0.201710071750-r",
+  "org.eclipse.jgit" % "org.eclipse.jgit" % "5.3.1.201904271842-r",
   "com.michaelpollmeier" % "versionsort" % "1.0.0"
 )
 

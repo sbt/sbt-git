@@ -19,8 +19,8 @@ before_cache:
 matrix:
   include:
   - env: SBT_VERSION="0.13.17"
-    jdk: oraclejdk8
+    jdk: openjdk8
   - env: SBT_VERSION="1.1.5"
-    jdk: oraclejdk8
+    jdk: openjdk8
 script:
   - sbt "^^${SBT_VERSION}" test scripted

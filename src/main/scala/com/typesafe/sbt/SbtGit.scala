@@ -98,11 +98,12 @@ object SbtGit {
       val reader = extracted get GitKeys.gitReader
       val dir = extracted get baseDirectory
       val name = extracted get Keys.name
+      val end = scala.Console.BLUE + "> " + scala.Console.RESET
       if (isGitRepo(dir)) {
-        val branch = reader.withGit(_.branch)
-        name + "(" + branch + ")> "
+        val branch = scala.Console.GREEN + "[" + reader.withGit(_.branch) + "]" + scala.Console.RESET
+        name + branch + end
       } else {
-        name + "> "
+        name + end
       }
     }
   }

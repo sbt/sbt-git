@@ -124,11 +124,11 @@ object SbtGit {
     scmInfo := {
       val user = """(?:[^@\/]+@)?"""
       val domain = """([^\/]+)"""
-      val gitPath = """(.*)\.git\/?"""
+      val gitPath = """(.*)(?:\.git)?\/?"""
       val unauthenticated = raw"""(?:git|https?|ftps?)\:\/\/$domain\/$gitPath""".r
       val ssh = raw"""ssh\:\/\/$user$domain\/$gitPath""".r
       val headlessSSH = raw"""$user$domain:$gitPath""".r
-      
+
       def buildScmInfo(domain: String, repo: String) = Option(
         ScmInfo(
           url(s"https://$domain/$repo"),

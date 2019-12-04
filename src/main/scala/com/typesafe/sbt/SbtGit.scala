@@ -3,6 +3,7 @@ package com.typesafe.sbt
 import sbt._
 import Keys._
 import git.{ConsoleGitRunner, DefaultReadableGit, GitRunner, JGitRunner, ReadableGit}
+import scala.Console
 import sys.process.Process
 
 /** This plugin has all the basic 'git' functionality for other plugins. */
@@ -95,13 +96,14 @@ object SbtGit {
 
     val prompt: State => String = { state =>
       val extracted = Project.extract(state)
-      val reader = extracted get GitKeys.gitReader
-      val dir = extracted get baseDirectory
-      val name = extracted get Keys.name
-      val end = scala.Console.BLUE + "> " + scala.Console.RESET
+      val dir       = extracted.get(baseDirectory)
+      val name      = extracted.get(Keys.name)
+      val end       = s"${Console.BLUE}> ${Console.RESET}"
       if (isGitRepo(dir)) {
-        val branch = scala.Console.GREEN + "[" + reader.withGit(_.branch) + "]" + scala.Console.RESET
-        name + branch + end
+        val reader        = extracted.get(GitKeys.gitReader)
+        val branchName    = reader.withGit(_.branch)
+        val branchColored = s"${Console.GREEN}[$branchName]${Console.RESET}"
+        name + branchColored + end
       } else {
         name + end
       }

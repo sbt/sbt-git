@@ -4,6 +4,7 @@ import sbt._
 import Keys._
 import git.{ConsoleGitRunner, DefaultReadableGit, GitRunner, JGitRunner, ReadableGit}
 import sys.process.Process
+import scala.collection.immutable.Seq
 
 /** This plugin has all the basic 'git' functionality for other plugins. */
 object SbtGit {
@@ -128,7 +129,7 @@ object SbtGit {
       val unauthenticated = raw"""(?:git|https?|ftps?)\:\/\/$domain\/$gitPath""".r
       val ssh = raw"""ssh\:\/\/$user$domain\/$gitPath""".r
       val headlessSSH = raw"""$user$domain:$gitPath""".r
-      
+
       def buildScmInfo(domain: String, repo: String) = Option(
         ScmInfo(
           url(s"https://$domain/$repo"),

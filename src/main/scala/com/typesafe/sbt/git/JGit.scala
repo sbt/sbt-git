@@ -74,7 +74,7 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
   def tagHash(tag: Ref) = {
     // Annotated (signed) and plain tags work differently,
     // plain ones have the null PeeledObjectId
-    val peeled = repo.peel(tag)
+    val peeled = repo.getRefDatabase.peel(tag)
     val id =
       if (peeled.getPeeledObjectId ne null)
         peeled.getPeeledObjectId

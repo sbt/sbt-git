@@ -5,6 +5,9 @@
 The `sbt-git` plugin offers git command line features directly inside sbt as
 well as allowing other plugins to make use of git.
 
+## Maintenance status
+
+This plugin is community maintained. See https://github.com/sbt/sbt-git/issues/182 if you'd like to help.
 
 ## Installation ##
 As of `1.0.0` this plugin requires at least **Java 8**.

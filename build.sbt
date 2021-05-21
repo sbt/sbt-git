@@ -1,4 +1,5 @@
 organization := "com.typesafe.sbt"
+sonatypeProfileName := "com.typesafe"
 name := "sbt-git"
 licenses := Seq(("BSD-2-Clause", url("https://opensource.org/licenses/BSD-2-Clause")))
 description := "An sbt plugin that offers git features directly inside sbt"

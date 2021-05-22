@@ -257,14 +257,17 @@ object SbtGit {
     }
 
     def releaseVersion(currentTags: Seq[String], releaseTagVersion: String => Option[String], suffix: String): Option[String] = {
-      val releaseVersions =
+      val versions =
         for {
           tag <- currentTags
           version <- releaseTagVersion(tag)
-        } yield version + suffix
+        } yield version
+
       // NOTE - Selecting the last tag or the first tag should be an option.
-      releaseVersions.sortWith { versionsort.VersionHelper.compare(_, _) > 0 }.headOption
+      val highestVersion = versions.sortWith { versionsort.VersionHelper.compare(_, _) > 0 }.headOption
+      highestVersion.map(_ + suffix)
     }
+
     def overrideVersion(versionProperty: String) = Option(sys.props(versionProperty))
 
     def makeVersion(versionPossibilities: Seq[Option[String]]): Option[String] = {

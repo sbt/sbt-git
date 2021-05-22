@@ -2,7 +2,7 @@ package com.typesafe.sbt
 
 import sbt._
 import Keys._
-import git.{ConsoleGitRunner, DefaultReadableGit, GitRunner, JGitRunner, ReadableGit}
+import git.{ConsoleGitReadableOnly, ConsoleGitRunner, DefaultReadableGit, GitRunner, JGitRunner, ReadableGit}
 import sys.process.Process
 
 /** This plugin has all the basic 'git' functionality for other plugins. */
@@ -40,6 +40,9 @@ object SbtGit {
 
     // The remote repository we're using.
     val gitRemoteRepo = SettingKey[String]("git-remote-repo", "The remote git repository associated with this project")
+
+    // Git worktree workaround
+    val useConsoleForROGit = SettingKey[Boolean]("console-ro-runner", "Whether to shell out to git for ro ops in the current build.")
   }
 
   object GitCommand {
@@ -110,7 +113,8 @@ object SbtGit {
   // Build settings.
   import GitKeys._
   def buildSettings = Seq(
-    gitReader := new DefaultReadableGit(baseDirectory.value),
+    useConsoleForROGit := false,
+    gitReader := new DefaultReadableGit(baseDirectory.value, if (useConsoleForROGit.value) Some(new ConsoleGitReadableOnly(ConsoleGitRunner, file("."), ConsoleLogger())) else None),
     gitRunner := ConsoleGitRunner,
     gitHeadCommit := gitReader.value.withGit(_.headCommitSha),
     gitHeadMessage := gitReader.value.withGit(_.headCommitMessage),
@@ -152,6 +156,9 @@ object SbtGit {
 
   /** A Predefined setting to use JGit runner for git. */
   def useJGit: Setting[_] = gitRunner in ThisBuild := JGitRunner
+
+  /** Setting to use console git for readable ops, to allow working with git worktrees */
+  def useReadableConsoleGit: Setting[_] = useConsoleForROGit in ThisBuild := true
 
   /** Adapts the project prompt to show the current project name *and* the current git branch. */
   def showCurrentGitBranch: Setting[_] =

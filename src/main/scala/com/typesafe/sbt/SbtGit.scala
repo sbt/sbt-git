@@ -121,30 +121,32 @@ object SbtGit {
     gitCurrentTags := gitReader.value.withGit(_.currentTags),
     gitCurrentBranch := Option(gitReader.value.withGit(_.branch)).getOrElse(""),
     gitUncommittedChanges in ThisBuild := gitReader.value.withGit(_.hasUncommittedChanges),
-    scmInfo := {
-      val user = """(?:[^@\/]+@)?"""
-      val domain = """([^\/]+)"""
-      val gitPath = """(.*)(?:\.git)?\/?"""
-      val unauthenticated = raw"""(?:git|https?|ftps?)\:\/\/$domain\/$gitPath""".r
-      val ssh = raw"""ssh\:\/\/$user$domain\/$gitPath""".r
-      val headlessSSH = raw"""$user$domain:$gitPath""".r
-
-      def buildScmInfo(domain: String, repo: String) = Option(
-        ScmInfo(
-          url(s"https://$domain/$repo"),
-          s"scm:git:https://$domain/$repo.git",
-          Some(s"scm:git:git@$domain:$repo.git")
-        )
-      )
-
-      gitReader.value.withGit(_.remoteOrigin) match {
-        case unauthenticated(domain, repo) => buildScmInfo(domain,repo)
-        case ssh(domain, repo) => buildScmInfo(domain,repo)
-        case headlessSSH(domain, repo) => buildScmInfo(domain,repo)
-        case _ => None
-      }
-    }
+    scmInfo := parseScmInfo(gitReader.value.withGit(_.remoteOrigin))
   )
+  private[sbt] def parseScmInfo(remoteOrigin: String): Option[ScmInfo] = {
+    val user = """(?:[^@\/]+@)?"""
+    val domain = """([^\/]+)"""
+    val gitPath = """(.*?)(?:\.git)?\/?$"""
+    val unauthenticated = raw"""(?:git|https?|ftps?)\:\/\/$domain\/$gitPath""".r
+    val ssh = raw"""ssh\:\/\/$user$domain\/$gitPath""".r
+    val headlessSSH = raw"""$user$domain:$gitPath""".r
+
+    def buildScmInfo(domain: String, repo: String): Option[ScmInfo] = Option(
+      ScmInfo(
+        url(s"https://$domain/$repo"),
+        s"scm:git:https://$domain/$repo.git",
+        Some(s"scm:git:git@$domain:$repo.git")
+      )
+    )
+
+    remoteOrigin match {
+      case unauthenticated(domain, repo) => buildScmInfo(domain,repo)
+      case ssh(domain, repo) => buildScmInfo(domain,repo)
+      case headlessSSH(domain, repo) => buildScmInfo(domain,repo)
+      case _ => None
+    }
+  }
+
   val projectSettings = Seq(
     // Input task to run git commands directly.
     commands += GitCommand.command

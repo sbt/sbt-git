@@ -15,7 +15,8 @@ git.baseVersion := "1.0"
 
 libraryDependencies ++= Seq(
   "org.eclipse.jgit" % "org.eclipse.jgit" % "5.11.0.202103091610-r",
-  "com.michaelpollmeier" % "versionsort" % "1.0.0"
+  "com.michaelpollmeier" % "versionsort" % "1.0.0",
+  "org.scalameta" %% "munit" % "0.7.29" % Test
 )
 
 scriptedLaunchOpts += s"-Dproject.version=${version.value}"

@@ -15,7 +15,7 @@ git.baseVersion := "1.0"
 
 libraryDependencies ++= Seq(
   "org.eclipse.jgit" % "org.eclipse.jgit" % "5.11.1.202105131744-r",
-  "com.michaelpollmeier" % "versionsort" % "1.0.0",
+  "com.michaelpollmeier" % "versionsort" % "1.0.11",
   "org.scalameta" %% "munit" % "0.7.29" % Test
 )
 

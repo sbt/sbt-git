@@ -15,9 +15,9 @@ The latest version supporting Java 7 was `0.9.3`, while the latest version suppo
 
 Latest:
 
-Add the following to your `project/plugins.sbt` or `~/.sbt/0.13/plugins/plugins.sbt` file:
+Add the following to your `project/plugins.sbt` or `~/.sbt/1.0/plugins/plugins.sbt` file:
 
-    addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "1.0.0")
+    addSbtPlugin("com.github.sbt" % "sbt-git" % "<version>")
 
 Prior to sbt 0.13.5:
 

@@ -101,7 +101,7 @@ You can use the git plugin to add the project name + the current branch to your 
 In an sbt prompt, simply enter any git command.  e.g.
 
     > git status
-    # On branch master
+    # On branch main
     # Changes not staged for commit:
     #   (use "git add <file>..." to update what will be committed)
     #   (use "git checkout -- <file>..." to discard changes in working directory)

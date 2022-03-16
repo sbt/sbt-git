@@ -1,4 +1,4 @@
-package com.typesafe.sbt.git
+package com.github.sbt.git
 
 /** An interface for interacting with git in a read-only manner. */
 trait ReadableGit {

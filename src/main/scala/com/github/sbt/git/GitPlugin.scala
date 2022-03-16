@@ -1,8 +1,7 @@
-package com.typesafe.sbt
+package com.github.sbt.git
 
 import sbt._
 import Keys._
-import git.{ConsoleGitReadableOnly, ConsoleGitRunner, DefaultReadableGit, GitRunner, JGitRunner, ReadableGit}
 import sys.process.Process
 
 /** This plugin has all the basic 'git' functionality for other plugins. */

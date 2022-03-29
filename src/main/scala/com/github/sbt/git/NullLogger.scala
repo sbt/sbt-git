@@ -1,4 +1,4 @@
-package com.typesafe.sbt.git
+package com.github.sbt.git
 
 import sbt.LogEvent
 import sbt.Level

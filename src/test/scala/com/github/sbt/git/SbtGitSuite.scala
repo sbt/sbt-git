@@ -1,4 +1,4 @@
-package com.typesafe.sbt
+package com.github.sbt.git
 
 import sbt.ScmInfo
 import sbt.url

@@ -1,4 +1,4 @@
-package com.typesafe.sbt.git
+package com.github.sbt.git
 
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder

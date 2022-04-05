@@ -37,12 +37,12 @@ object ConsoleGitRunner extends GitRunner {
   // reduce log level for git process
   private class GitLogger(log: Logger) extends ProcessLogger {
     import scala.collection.mutable.ListBuffer
-    import Level.{ Info, Warn, Error, Value => LogLevel }
+    import Level.{ Debug, Info, Warn, Error, Value => LogLevel }
 
     private val msgs: ListBuffer[(LogLevel, String)] = new ListBuffer()
 
     def info(s: => String): Unit =
-      synchronized { msgs += ((Info, s)) }
+      synchronized { msgs += ((Debug, s)) }
 
     def error(s: => String): Unit =
       synchronized { msgs += ((Error, s)) }
@@ -63,7 +63,7 @@ object ConsoleGitRunner extends GitRunner {
     }
 
     def flush(exitCode: Int): String = {
-      val level = if (exitCode == 0) Info else Error // reduce log level Error -> Info if exitCode is zero
+      val level = if (exitCode == 0) Debug else Error // reduce log level Error -> Debug if exitCode is zero
       var result = msgs map print(level)
       msgs.clear()
       result.mkString("\n")

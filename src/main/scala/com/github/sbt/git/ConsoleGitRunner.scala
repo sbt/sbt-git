@@ -54,6 +54,9 @@ object ConsoleGitRunner extends GitRunner {
     def buffer[T](f: => T): T = f
 
     private def print(desiredLevel: LogLevel)(t: (LogLevel, String)): String = t match {
+      case (Debug, msg) =>
+        log.debug(msg)
+        msg
       case (Info, msg) =>
         log.info(msg)
         msg

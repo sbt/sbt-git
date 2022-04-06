@@ -1,0 +1,13 @@
+> git init
+> git config user.email "test@jsuereth.com"
+> git config user.name "Tester"
+> git add README.md
+> git commit -m "test"
+> git tag -am "a version" a-1.0
+> git add README2.md
+> git commit -m "test"
+> git tag -am "b version" b-2.0
+$ copy-file changes/build.sbt build.sbt
+> reload
+> inspect version
+> checkVersion

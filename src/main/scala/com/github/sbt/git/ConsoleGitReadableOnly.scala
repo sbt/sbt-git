@@ -11,15 +11,15 @@ class ConsoleGitReadableOnly(git: GitRunner, cwd: File, log: Logger) extends Git
 
   def headCommitDate: Option[String] = Try(git("log", """--pretty="%cI"""", "-n", "1")(cwd, log)).toOption
 
-  def currentTags: Seq[String] = git("tag", "--points-at", "HEAD")(cwd, log).split("\\s+")
+  def currentTags: Seq[String] = Try(git("tag", "--points-at", "HEAD")(cwd, log).split("\\s+").toSeq).getOrElse(Seq())
 
-  def describedVersion: Option[String] = git("describe", "--tags")(cwd, log).split("\\s+").headOption
+  def describedVersion: Option[String] = Try(git("describe", "--tags")(cwd, log).split("\\s+").headOption).toOption.flatten
 
-  def hasUncommittedChanges: Boolean = git("status")(cwd, log).contains("nothing to commit, working tree clean")
+  def hasUncommittedChanges: Boolean = Try(!git("status", "-s")(cwd, log).trim.isEmpty).getOrElse(true)
 
-  def branches: Seq[String] = git("branch", "--list")(cwd, log).split("\\s+")
+  def branches: Seq[String] = Try(git("branch", "--list")(cwd, log).split("\\s+").toSeq).getOrElse(Seq())
 
-  def remoteBranches: Seq[String] = git("branch", "-l", "--remotes")(cwd, log).split("\\s+")
+  def remoteBranches: Seq[String] = Try(git("branch", "-l", "--remotes")(cwd, log).split("\\s+").toSeq).getOrElse(Seq())
 
   def remoteOrigin: String = git("ls-remote", "--get-url", "origin")(cwd, log)
 

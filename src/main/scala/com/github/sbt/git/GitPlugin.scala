@@ -123,7 +123,7 @@ object SbtGit {
     gitDescribedVersion := gitReader.value.withGit(_.describedVersion(git.gitDescribePatterns.value)).map(v => git.gitTagToVersionNumber.value(v).getOrElse(v)),
     gitCurrentTags := gitReader.value.withGit(_.currentTags),
     gitCurrentBranch := Option(gitReader.value.withGit(_.branch)).getOrElse(""),
-    gitUncommittedChanges in ThisBuild := gitReader.value.withGit(_.hasUncommittedChanges),
+    ThisBuild / gitUncommittedChanges := gitReader.value.withGit(_.hasUncommittedChanges),
     scmInfo := parseScmInfo(gitReader.value.withGit(_.remoteOrigin))
   )
   private[sbt] def parseScmInfo(remoteOrigin: String): Option[ScmInfo] = {
@@ -152,11 +152,14 @@ object SbtGit {
 
   val projectSettings = Seq(
     // Input task to run git commands directly.
-    commands += GitCommand.command
+    commands += GitCommand.command,
+    gitTagToVersionNumber := git.defaultTagByVersionStrategy,
+    gitDescribePatterns := Seq.empty[String],
+    gitDescribedVersion := gitReader.value.withGit(_.describedVersion((ThisProject / gitDescribePatterns).value)).map(v => git.gitTagToVersionNumber.value(v).getOrElse(v)),
   )
 
   /** A Predefined setting to use JGit runner for git. */
-  def useJGit: Setting[_] = gitRunner in ThisBuild := JGitRunner
+  def useJGit: Setting[_] = ThisBuild / gitRunner := JGitRunner
 
   /** Setting to use console git for readable ops, to allow working with git worktrees */
   def useReadableConsoleGit: Setting[_] = useConsoleForROGit in ThisBuild := true
@@ -177,65 +180,89 @@ object SbtGit {
    */
   def versionWithGit: Seq[Setting[_]] =
     Seq(
-        versionProperty in ThisBuild := "project.version",
-        uncommittedSignifier in ThisBuild := Some("SNAPSHOT"),
-        useGitDescribe in ThisBuild := false,
-        formattedShaVersion in ThisBuild := {
-          val base = git.baseVersion.?.value
-          val suffix =
-            git.makeUncommittedSignifierSuffix(git.gitUncommittedChanges.value, git.uncommittedSignifier.value)
-          git.gitHeadCommit.value map { sha =>
-            git.defaultFormatShaVersion(base, sha, suffix)
-          }
-        },
-        formattedDateVersion in ThisBuild := {
-          val base = git.baseVersion.?.value
-          git.defaultFormatDateVersion(base, new java.util.Date)
-        },
-        isSnapshot in ThisBuild := {
-          git.gitCurrentTags.value.isEmpty || git.gitUncommittedChanges.value
-        },
-        version in ThisBuild := {
-          val overrideVersion =
-            git.overrideVersion(git.versionProperty.value)
-          val uncommittedSuffix =
-            git.makeUncommittedSignifierSuffix(git.gitUncommittedChanges.value, git.uncommittedSignifier.value)
-          val releaseVersion =
-            git.releaseVersion(git.gitCurrentTags.value, git.gitTagToVersionNumber.value, uncommittedSuffix)
-          val describedVersion =
-            git.flaggedOptional(git.useGitDescribe.value, git.describeVersion(git.gitDescribedVersion.value, uncommittedSuffix))
-          val datedVersion = formattedDateVersion.value
-          val commitVersion = formattedShaVersion.value
-          //Now we fall through the potential version numbers...
-          git.makeVersion(Seq(
-             overrideVersion,
-             releaseVersion,
-             describedVersion,
-             commitVersion
-          )) getOrElse datedVersion // For when git isn't there at all.
+      ThisBuild / versionProperty := "project.version",
+      ThisBuild / uncommittedSignifier := Some("SNAPSHOT"),
+      ThisBuild / useGitDescribe := false,
+      ThisBuild / formattedShaVersion := {
+        val base = git.baseVersion.?.value
+        val suffix =
+          git.makeUncommittedSignifierSuffix(git.gitUncommittedChanges.value, git.uncommittedSignifier.value)
+        git.gitHeadCommit.value map { sha =>
+          git.defaultFormatShaVersion(base, sha, suffix)
         }
+      },
+      ThisBuild / formattedDateVersion := {
+        val base = git.baseVersion.?.value
+        git.defaultFormatDateVersion(base, new java.util.Date)
+      },
+      ThisBuild / isSnapshot := {
+        git.gitCurrentTags.value.isEmpty || git.gitUncommittedChanges.value
+      },
+      ThisBuild / version := {
+        val overrideVersion =
+          git.overrideVersion(git.versionProperty.value)
+        val uncommittedSuffix =
+          git.makeUncommittedSignifierSuffix(git.gitUncommittedChanges.value, git.uncommittedSignifier.value)
+        val releaseVersion =
+          git.releaseVersion(git.gitCurrentTags.value, (ThisBuild / gitTagToVersionNumber).value, uncommittedSuffix)
+        val describedVersion =
+          git.flaggedOptional(git.useGitDescribe.value, git.describeVersion((ThisBuild / gitDescribedVersion).value, uncommittedSuffix))
+        val datedVersion = formattedDateVersion.value
+        val commitVersion = formattedShaVersion.value
+        //Now we fall through the potential version numbers...
+        git.makeVersion(Seq(
+          overrideVersion,
+          releaseVersion,
+          describedVersion,
+          commitVersion
+        )) getOrElse datedVersion // For when git isn't there at all.
+      }
+    )
+
+  def versionProjectWithGit: Seq[Setting[_]] =
+    Seq(
+      ThisProject / useGitDescribe := false,
+      ThisProject / version := {
+        val overrideVersion =
+          git.overrideVersion(git.versionProperty.value)
+        val uncommittedSuffix =
+          git.makeUncommittedSignifierSuffix(git.gitUncommittedChanges.value, git.uncommittedSignifier.value)
+        val releaseVersion =
+          git.releaseVersion(git.gitCurrentTags.value, (ThisProject / gitTagToVersionNumber).value, uncommittedSuffix)
+        val describedVersion =
+          git.flaggedOptional(git.useGitDescribe.value, git.describeVersion((ThisProject / gitDescribedVersion).value, uncommittedSuffix))
+        val datedVersion = formattedDateVersion.value
+        val commitVersion = formattedShaVersion.value
+        //Now we fall through the potential version numbers...
+        git.makeVersion(Seq(
+          overrideVersion,
+          releaseVersion,
+          describedVersion,
+          commitVersion
+        )) getOrElse datedVersion // For when git isn't there at all.
+      }
     )
 
   /** A holder of keys for simple config. */
   object git {
     val remoteRepo = GitKeys.gitRemoteRepo
     val branch = GitKeys.gitBranch
-    val runner = GitKeys.gitRunner in ThisBuild
-    val gitHeadCommit = GitKeys.gitHeadCommit in ThisBuild
-    val gitHeadMessage = GitKeys.gitHeadMessage in ThisBuild
-    val gitHeadCommitDate = GitKeys.gitHeadCommitDate in ThisBuild
-    val useGitDescribe = GitKeys.useGitDescribe in ThisBuild
-    val gitDescribePatterns = GitKeys.gitDescribePatterns in ThisBuild
-    val gitDescribedVersion = GitKeys.gitDescribedVersion in ThisBuild
-    val gitCurrentTags = GitKeys.gitCurrentTags in ThisBuild
-    val gitCurrentBranch = GitKeys.gitCurrentBranch in ThisBuild
-    val gitTagToVersionNumber = GitKeys.gitTagToVersionNumber in ThisBuild
-    val baseVersion = GitKeys.baseVersion in ThisBuild
-    val versionProperty = GitKeys.versionProperty in ThisBuild
-    val gitUncommittedChanges = GitKeys.gitUncommittedChanges in ThisBuild
-    val uncommittedSignifier = GitKeys.uncommittedSignifier in ThisBuild
-    val formattedShaVersion = GitKeys.formattedShaVersion in ThisBuild
-    val formattedDateVersion = GitKeys.formattedDateVersion in ThisBuild
+    val runner = ThisBuild / GitKeys.gitRunner
+    val gitHeadCommit = ThisBuild / GitKeys.gitHeadCommit
+    val gitHeadMessage = ThisBuild / GitKeys.gitHeadMessage
+    val gitHeadCommitDate = ThisBuild / GitKeys.gitHeadCommitDate
+    val useGitDescribe = ThisProject / GitKeys.useGitDescribe
+    val gitDescribePatterns = ThisProject / GitKeys.gitDescribePatterns
+    val gitDescribedVersion = ThisProject / GitKeys.gitDescribedVersion
+    val gitCurrentTags = ThisBuild / GitKeys.gitCurrentTags
+    val gitCurrentBranch = ThisBuild / GitKeys.gitCurrentBranch
+    val gitTagToVersionNumber = ThisProject / GitKeys.gitTagToVersionNumber
+    val baseVersion = ThisBuild / GitKeys.baseVersion
+    val versionProperty = ThisBuild / GitKeys.versionProperty
+    val gitUncommittedChanges = ThisBuild / GitKeys.gitUncommittedChanges
+    val uncommittedSignifier = ThisBuild / GitKeys.uncommittedSignifier
+    val formattedShaVersion = ThisBuild / GitKeys.formattedShaVersion
+    val formattedDateVersion = ThisBuild / GitKeys.formattedDateVersion
 
 
     val defaultTagByVersionStrategy: String => Option[String] = { tag =>
@@ -248,9 +275,9 @@ object SbtGit {
     }
 
     def defaultFormatDateVersion(baseVersion:Option[String], date:java.util.Date):String = {
-        val df = new java.text.SimpleDateFormat("yyyyMMdd'T'HHmmss")
-        df setTimeZone java.util.TimeZone.getTimeZone("GMT")
-        baseVersion.map(_ +"-").getOrElse("") + (df format (new java.util.Date))
+      val df = new java.text.SimpleDateFormat("yyyyMMdd'T'HHmmss")
+      df setTimeZone java.util.TimeZone.getTimeZone("GMT")
+      baseVersion.map(_ +"-").getOrElse("") + (df format (new java.util.Date))
     }
 
     def flaggedOptional(flag: Boolean, value: Option[String]): Option[String] =
@@ -285,13 +312,13 @@ object SbtGit {
 }
 
 /** The autoplugin which adapts the old sbt plugin classes into a legitimate AutoPlugin.
-  *
-  * This will add the ability to call git directly in the sbt shell via a command, as well as add
-  * the infrastructure to read git properties.
-  *
-  * We keep the old SbtGit object around in an attempt not to break projects which depend on the old
-  * plugin directly.
-  */
+ *
+ * This will add the ability to call git directly in the sbt shell via a command, as well as add
+ * the infrastructure to read git properties.
+ *
+ * We keep the old SbtGit object around in an attempt not to break projects which depend on the old
+ * plugin directly.
+ */
 object GitPlugin extends AutoPlugin {
   override def requires = sbt.plugins.CorePlugin
   override def trigger = allRequirements
@@ -300,6 +327,7 @@ object GitPlugin extends AutoPlugin {
   object autoImport {
     val git = SbtGit.git
     def versionWithGit = SbtGit.versionWithGit
+    def versionProjectWithGit = SbtGit.versionProjectWithGit
     def useJGit = SbtGit.useJGit
     def showCurrentGitBranch = SbtGit.showCurrentGitBranch
   }
@@ -311,6 +339,7 @@ object GitPlugin extends AutoPlugin {
 object GitVersioning extends AutoPlugin {
   override def requires = sbt.plugins.IvyPlugin && GitPlugin
   override def buildSettings = GitPlugin.autoImport.versionWithGit
+  override def projectSettings = GitPlugin.autoImport.versionProjectWithGit
 }
 /** Adapter to enable the git prompt. i.e. rich prompt based on git info. */
 object GitBranchPrompt extends AutoPlugin {

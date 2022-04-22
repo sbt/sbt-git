@@ -171,7 +171,7 @@ object SbtGit {
    * Versioning runs through the following:
    *
    * 1. Looks at version-property settings, and checks the sys.props to see if this has a value.
-   * 2. Looks at the project tags.  The first to match the `gitTagToVersionNumberSetting` is used to assign the version.
+   * 2. Looks at the project tags.  The first to match the `gitTagToVersionNumber` setting is used to assign the version.
    * 3. if we have a head commit, we attach this to the base version setting "<base-version>.<git commit sha>"
    * 4. We append the current timestamp to the base version: "<base-version>.<timestamp>"
    */

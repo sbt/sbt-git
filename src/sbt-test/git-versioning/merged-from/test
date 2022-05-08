@@ -1,0 +1,15 @@
+> git init
+> git config user.email "test@jsuereth.com"
+> git config user.name "Tester"
+> git add README.md
+> git commit -m "test"
+> git checkout -b branch_2
+> git add README2.md
+> git commit -m "test2"
+> git checkout master
+> git add README3.md
+> git commit -m "test3"
+> git merge --no-edit branch_2
+$ copy-file changes/build.sbt build.sbt
+> reload
+> checkMergedFrom

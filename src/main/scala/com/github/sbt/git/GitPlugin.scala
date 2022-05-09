@@ -21,6 +21,7 @@ object SbtGit {
     val gitUncommittedChanges = SettingKey[Boolean]("git-uncommitted-changes", "Whether there are uncommitted changes.")
     val gitMergeMessagePatterns = settingKey[Seq[String]]("Collection of regex patterns with one sub-group to parse commit messages of merge commits")
     val gitMergeFrom = SettingKey[Option[String]]("git-merge-from", "Possible name of a branch HEAD is a merge from")
+    val gitFilesChangedLastCommit = SettingKey[Seq[String]]("git-last-changes", "List of files changed in the last commit")
 
     // A Mechanism to run Git directly.
     val gitRunner = TaskKey[GitRunner]("git-runner", "The mechanism used to run git in the current build.")
@@ -127,6 +128,7 @@ object SbtGit {
     gitCurrentBranch := Option(gitReader.value.withGit(_.branch)).getOrElse(""),
     ThisBuild / gitUncommittedChanges := gitReader.value.withGit(_.hasUncommittedChanges),
     gitMergeMessagePatterns := Seq.empty[String],
+    gitFilesChangedLastCommit := gitReader.value.withGit(_.changedFiles),
     gitMergeFrom := {
       for {
         headMessage <- gitHeadMessage.value.map(_.trim)
@@ -277,6 +279,7 @@ object SbtGit {
     val baseVersion = ThisBuild / GitKeys.baseVersion
     val versionProperty = ThisBuild / GitKeys.versionProperty
     val gitUncommittedChanges = ThisBuild / GitKeys.gitUncommittedChanges
+    val gitFilesChangedLastCommit = ThisBuild / GitKeys.gitFilesChangedLastCommit
     val gitMergeFrom = ThisBuild / GitKeys.gitMergeFrom
     val gitMergeMessagePatterns = ThisBuild / GitKeys.gitMergeMessagePatterns
     val uncommittedSignifier = ThisBuild / GitKeys.uncommittedSignifier

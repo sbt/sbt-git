@@ -2,16 +2,18 @@ package com.github.sbt.git
 
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
-import org.eclipse.jgit.api.{Git => PGit}
-import java.io.File
+import org.eclipse.jgit.api.Git as PGit
+import org.eclipse.jgit.diff.DiffFormatter
+
+import java.io.{ByteArrayOutputStream, File}
 import java.text.SimpleDateFormat
 import java.util.Date
-
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.revwalk.{RevCommit, RevWalk}
 
 import scala.util.Try
+import scala.collection.JavaConverters.*
 
 
 // TODO - This class needs a bit more work, but at least it lets us use porcelain and wrap some higher-level
@@ -29,12 +31,10 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
   def branch: String = repo.getBranch
 
   private def branchesRef: Seq[Ref] = {
-    import collection.JavaConverters._
     porcelain.branchList.call.asScala
   }
 
   def tags: Seq[Ref] = {
-    import collection.JavaConverters._
     porcelain.tagList.call().asScala
   }
 
@@ -96,14 +96,12 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
   override def branches: Seq[String] = branchesRef.filter(_.getName.startsWith("refs/heads")).map(_.getName.drop(11))
 
   override def remoteBranches: Seq[String] = {
-    import collection.JavaConverters._
     import org.eclipse.jgit.api.ListBranchCommand.ListMode
     porcelain.branchList.setListMode(ListMode.REMOTE).call.asScala.filter(_.getName.startsWith("refs/remotes")).map(_.getName.drop(13))
   }
 
   override def remoteOrigin: String = {
     // same functionality as Process("git ls-remote --get-url origin").lines_!.head
-    import collection.JavaConverters._
     porcelain.remoteList().call.asScala
       .filter(_.getName == "origin")
       .flatMap(_.getURIs.asScala)
@@ -124,6 +122,24 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
       format.setTimeZone(commit.getCommitterIdent.getTimeZone)
       format.format(new Date(millis))
     }
+  }
+
+  /** Files changed in current commit *   */
+  override def changedFiles: Seq[String] = {
+    val walk = new RevWalk(repo)
+    val maybeChanges = for {
+      head <- headCommit.map(walk.parseCommit)
+      parent <- Try(head.getParent(0)).toOption
+    } yield {
+      val os = new ByteArrayOutputStream()
+      val diffFormatter = new DiffFormatter(os)
+      diffFormatter.setRepository(repo)
+      diffFormatter.scan(parent, head)
+        .asScala
+        .flatMap(entry => Set(entry.getOldPath, entry.getNewPath))
+        .filterNot(_.startsWith("/"))
+    }
+    maybeChanges.getOrElse(Seq.empty)
   }
 }
 

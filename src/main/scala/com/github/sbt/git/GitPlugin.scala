@@ -329,6 +329,7 @@ object GitPlugin extends AutoPlugin {
     def versionWithGit = SbtGit.versionWithGit
     def versionProjectWithGit = SbtGit.versionProjectWithGit
     def useJGit = SbtGit.useJGit
+    def useReadableConsoleGit = SbtGit.useReadableConsoleGit
     def showCurrentGitBranch = SbtGit.showCurrentGitBranch
   }
   override def buildSettings: Seq[Setting[_]] = SbtGit.buildSettings

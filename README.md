@@ -36,10 +36,11 @@ write operations, it assumes a git executable is present and on the PATH and
 it uses that.
 
 In certain circumstances you may want to force the use of JGit or an
-executable for both read-only and read-write operations; for example, if you
-have no git executable installed (e.g. you use windows) you need to disable
-the console interface, or if you rely on a git feature that JGit does not
-support (e.g. worktrees) you need to disable the JGit interface.
+executable for both read-only and read-write operations; for example, if no
+git executable is present (e.g. you use windows and you haven't installed git
+or it's not on your PATH) you need to disable the console interface, or if
+you rely on a git feature that JGit does not support (e.g. worktrees) you need
+to disable the JGit interface.
 
 The following settings will force the use of only JGit or a git executable,
 respectively:

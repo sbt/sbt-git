@@ -35,7 +35,7 @@ this plugin uses JGit for read-only operations such as inspecting HEAD; for
 write operations, it assumes a git executable is present and on the PATH and
 it uses that.
 
-In certain circumstances you may want to force the use of JGIT or an
+In certain circumstances you may want to force the use of JGit or an
 executable for both read-only and read-write operations; for example, if you
 have no git executable installed (e.g. you use windows) you need to disable
 the console interface, or if you rely on a git feature that JGit does not
@@ -48,12 +48,12 @@ respectively:
 * `useReadableConsoleGit`
 
 These settings can be included in your project's `git.sbt` or in
-`~/.sbt/0.13/git.sbt` -- for example, if no git executable is installed,
+`~/.sbt/1.0/git.sbt` -- for example, if no git executable is installed,
 either file can have the following contents:
 
     useJGit
 
-Or you can `set` the appropriate setting in the SBT prompt:
+Or you can `set` the appropriate setting in the sbt prompt:
 
     > set useReadableConsoleGit
     [info] Reapplying settings...

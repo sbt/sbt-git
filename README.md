@@ -27,26 +27,41 @@ Add the following to your `project/plugins.sbt` or `~/.sbt/0.13/plugins/plugins.
 
 additionally, use one of the older README.md files: (https://github.com/sbt/sbt-git/blob/v0.7.1/README.md)
 
-### Using JGit ###
+### JGit ###
 
-If you do not have git installed and available on your path (e.g. you use windows),
-make sure your `git.sbt` or `~/.sbt/0.13/git.sbt` file looks like this:
+JGit is a Java interface to git that allows some git operations to be
+performed in the JVM without invoking an external git executable. By default,
+this plugin uses JGit for read-only operations such as inspecting HEAD; for
+write operations, it assumes a git executable is present and on the PATH and
+it uses that.
+
+In certain circumstances you may want to force the use of JGit or an
+executable for both read-only and read-write operations; for example, if no
+git executable is present (e.g. you use windows and you haven't installed git
+or it's not on your PATH) you need to disable the console interface, or if
+you rely on a git feature that JGit does not support (e.g. worktrees) you need
+to disable the JGit interface.
+
+The following settings will force the use of only JGit or a git executable,
+respectively:
+
+* `useJGit`
+* `useReadableConsoleGit`
+
+These settings can be included in your project's `git.sbt` or in
+`~/.sbt/1.0/git.sbt` -- for example, if no git executable is installed,
+either file can have the following contents:
 
     useJGit
 
-Or you can type this into the prompt:
+Or you can `set` the appropriate setting in the sbt prompt:
 
-    > set useJGit
+    > set useReadableConsoleGit
     [info] Reapplying settings...
     [info] Set current project to scala-arm (in build file:...)
     > session save
     [info] Reapplying settings...
     [info] Set current project to scala-arm (in build file:...)
-
-This will enable a java-only GIT solution that, while not supporting all the same
-commands that can be run in the standard git command line, is good enough for most
-git activities.
-
 
 ## Versioning with Git ##
 

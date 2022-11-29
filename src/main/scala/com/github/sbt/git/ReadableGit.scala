@@ -28,6 +28,8 @@ trait GitReadonlyInterface {
   def remoteOrigin: String
   /** The message of current commit **/
   def headCommitMessage: Option[String]
+  /** Files changed in current commit **/
+  def changedFiles: Seq[String]
 }
 
 

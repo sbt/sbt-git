@@ -1,0 +1,11 @@
+> git init
+> git config user.email "test@jsuereth.com"
+> git config user.name "Tester"
+> git add README.md
+> git commit -m "test"
+> git add README2.md
+> git add README3.md
+> git commit -m "test2"
+$ copy-file changes/build.sbt build.sbt
+> reload
+> checkChangedFiles

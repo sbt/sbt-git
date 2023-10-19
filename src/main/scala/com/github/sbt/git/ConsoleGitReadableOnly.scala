@@ -15,6 +15,11 @@ class ConsoleGitReadableOnly(git: GitRunner, cwd: File, log: Logger) extends Git
 
   def describedVersion: Option[String] = Try(git("describe", "--tags")(cwd, log).split("\\s+").headOption).toOption.flatten
 
+  override def describedVersion(patterns: Seq[String]): Option[String] =
+    patterns.headOption.fold(describedVersion)(pat =>
+      Try(git("describe", "--tags", "--match", pat)(cwd, log).split("\\s+").headOption).toOption.flatten
+    )
+
   def hasUncommittedChanges: Boolean = Try(!git("status", "-s")(cwd, log).trim.isEmpty).getOrElse(true)
 
   def branches: Seq[String] = Try(git("branch", "--list")(cwd, log).split("\\s+").toSeq).getOrElse(Seq())

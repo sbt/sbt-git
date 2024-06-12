@@ -1,0 +1,3 @@
+$ exec ./init.sh
+> reload plugins
+> show gitHeadMessage

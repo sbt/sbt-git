@@ -16,9 +16,11 @@ object ConsoleGitRunner extends GitRunner {
   private lazy val cmd = if(isWindowsShell) Seq("cmd", "/c", "git") else Seq("git")
 
   // in order to enable colors we trick git into thinking we're a pager, because it already knows we're not a tty
-  val colorSupport: Seq[(String, String)] =
-    if(ConsoleLogger.formatEnabled) Seq("GIT_PAGER_IN_USE" -> "1")
+  val colorSupport: Seq[(String, String)] = {
+    import sbt.internal.util.Terminal.console
+    if(console.isAnsiSupported && console.isColorEnabled) Seq("GIT_PAGER_IN_USE" -> "1")
     else Seq.empty
+  }
 
   override def apply(args: String*)(cwd: File, log: Logger = ConsoleLogger()): String = {
     val gitLogger = new GitLogger(log)

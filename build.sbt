@@ -8,15 +8,15 @@ startYear := Some(2011)
 homepage := scmInfo.value map (_.browseUrl)
 scmInfo := Some(ScmInfo(url("https://github.com/sbt/sbt-git"), "scm:git:git@github.com:sbt/sbt-git.git"))
 
-crossSbtVersions := List("1.3.13")
+crossSbtVersions := List("1.10.1")
 
 enablePlugins(GitVersioning, SbtPlugin)
 git.baseVersion := "1.0"
 
 libraryDependencies ++= Seq(
   "org.eclipse.jgit" % "org.eclipse.jgit" % "5.13.3.202401111512-r",
-  "com.michaelpollmeier" % "versionsort" % "1.0.11",
-  "org.scalameta" %% "munit" % "1.0.1" % Test
+  "com.github.zafarkhaja" % "java-semver" % "0.10.2",
+  "org.scalameta" %% "munit" % "1.0.1" % Test,
 )
 
 scriptedLaunchOpts += s"-Dproject.version=${version.value}"

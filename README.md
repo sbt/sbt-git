@@ -72,7 +72,7 @@ You can begin to use git to control your project versions.
 The git plugin will now autogenerate your version using the following rules, in order:
 
 1. Looks at version-property setting (default to `project.version`), and checks the `sys.props` to see if this has a value.  If so, use it.
-2. Otherwise, looks at the project tags. The first to match the `gitTagToVersionNumberSetting` is used to assign the version.  The default is to look for tags that begin with `v` and a number, and use the number as the version. If there are multiple version tags, it will pick the highest.
+2. Otherwise, looks at the project tags. The first to match the `gitTagToVersionNumber` setting is used to assign the version.  The default is to look for tags that begin with `v` and a number, and use the number as the version. If there are multiple version tags, it will pick the highest.
 3. If no tags are found either, look at the head commit. We attach this to the `git.baseVersion` setting: "&lt;base-version&gt;.&lt;git commit sha&gt;"
 4. If no head commit is present either (which means this is a brand-new repository with no commits yet), we append the current timestamp to the base version: "&lt;base-version&gt;.&lt;timestamp&gt;".
 

@@ -155,7 +155,15 @@ object SbtGit {
     commands += GitCommand.command,
     gitTagToVersionNumber := git.defaultTagByVersionStrategy,
     gitDescribePatterns := Seq.empty[String],
-    gitDescribedVersion := gitReader.value.withGit(_.describedVersion((ThisProject / gitDescribePatterns).value)).map(v => git.gitTagToVersionNumber.value(v).getOrElse(v)),
+    gitDescribedVersion := {
+      val projectPatterns = gitDescribePatterns.value
+      val buildPatterns = (ThisBuild / gitDescribePatterns).value
+      val projectTagToVersionNumber = gitTagToVersionNumber.value
+      val buildTagToVersionNumber = (ThisBuild / gitTagToVersionNumber).value
+      if (projectPatterns == buildPatterns && projectTagToVersionNumber == buildTagToVersionNumber)
+        (ThisBuild / gitDescribedVersion).value
+      else gitReader.value.withGit(_.describedVersion(projectPatterns)).map(v => projectTagToVersionNumber(v).getOrElse(v))
+    },
   )
 
   /** A Predefined setting to use JGit runner for git. */

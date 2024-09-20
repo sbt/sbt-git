@@ -19,6 +19,9 @@ object SbtGit {
     val gitHeadCommitDate = SettingKey[Option[String]]("git-head-commit-date", "The commit date for the top commit of this project in ISO-8601 format.")
     val gitDescribedVersion = SettingKey[Option[String]]("git-described-version", "Version as returned by `git describe --tags`.")
     val gitUncommittedChanges = SettingKey[Boolean]("git-uncommitted-changes", "Whether there are uncommitted changes.")
+    val gitMergeMessagePatterns = settingKey[Seq[String]]("Collection of regex patterns with one sub-group to parse commit messages of merge commits")
+    val gitMergeFrom = SettingKey[Option[String]]("git-merge-from", "Possible name of a branch HEAD is a merge from")
+    val gitFilesChangedLastCommit = SettingKey[Seq[String]]("git-last-changes", "List of files changed in the last commit")
 
     // A Mechanism to run Git directly.
     val gitRunner = TaskKey[GitRunner]("git-runner", "The mechanism used to run git in the current build.")
@@ -124,6 +127,22 @@ object SbtGit {
     gitCurrentTags := gitReader.value.withGit(_.currentTags),
     gitCurrentBranch := Option(gitReader.value.withGit(_.branch)).getOrElse(""),
     ThisBuild / gitUncommittedChanges := gitReader.value.withGit(_.hasUncommittedChanges),
+    gitMergeMessagePatterns := Seq.empty[String],
+    gitFilesChangedLastCommit := gitReader.value.withGit(_.changedFiles),
+    gitMergeFrom := {
+      for {
+        headMessage <- gitHeadMessage.value.map(_.trim)
+        mergedFrom <- gitMergeMessagePatterns.value
+          .map(_.r.unanchored)
+          .flatMap { regex =>
+            headMessage match {
+              case regex(branch) => Option(branch)
+              case _ => None
+            }
+          }
+          .headOption
+      } yield mergedFrom
+    },
     scmInfo := parseScmInfo(gitReader.value.withGit(_.remoteOrigin))
   )
   private[sbt] def parseScmInfo(remoteOrigin: String): Option[ScmInfo] = {
@@ -268,6 +287,9 @@ object SbtGit {
     val baseVersion = ThisBuild / GitKeys.baseVersion
     val versionProperty = ThisBuild / GitKeys.versionProperty
     val gitUncommittedChanges = ThisBuild / GitKeys.gitUncommittedChanges
+    val gitFilesChangedLastCommit = ThisBuild / GitKeys.gitFilesChangedLastCommit
+    val gitMergeFrom = ThisBuild / GitKeys.gitMergeFrom
+    val gitMergeMessagePatterns = ThisBuild / GitKeys.gitMergeMessagePatterns
     val uncommittedSignifier = ThisBuild / GitKeys.uncommittedSignifier
     val formattedShaVersion = ThisBuild / GitKeys.formattedShaVersion
     val formattedDateVersion = ThisBuild / GitKeys.formattedDateVersion

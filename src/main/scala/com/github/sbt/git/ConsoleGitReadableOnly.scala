@@ -29,4 +29,10 @@ class ConsoleGitReadableOnly(git: GitRunner, cwd: File, log: Logger) extends Git
   def remoteOrigin: String = git("ls-remote", "--get-url", "origin")(cwd, log)
 
   def headCommitMessage: Option[String] = Try(git("log", "--pretty=%s\n\n%b", "-n", "1")(cwd, log)).toOption
+
+  def changedFiles: Seq[String] =
+    headCommitSha
+      .flatMap(headCommit => Try(git("diff-tree", "--no-commit-id", "--name-only", "-r", headCommit)(cwd, log)).toOption)
+      .map(_.split('\n').map(_.trim).toSeq)
+      .getOrElse(Seq.empty)
 }

@@ -8,8 +8,6 @@ startYear := Some(2011)
 homepage := scmInfo.value map (_.browseUrl)
 scmInfo := Some(ScmInfo(url("https://github.com/sbt/sbt-git"), "scm:git:git@github.com:sbt/sbt-git.git"))
 
-crossSbtVersions := List("1.5.8")
-
 lazy val scala212 = "2.12.20"
 lazy val scala3 = "3.3.4"
 

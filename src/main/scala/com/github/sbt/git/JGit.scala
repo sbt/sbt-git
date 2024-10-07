@@ -2,14 +2,14 @@ package com.github.sbt.git
 
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
-import org.eclipse.jgit.api.{Git => PGit}
+import org.eclipse.jgit.api.Git as PGit
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.Ref
-import org.eclipse.jgit.revwalk.{RevCommit, RevWalk}
+import org.eclipse.jgit.revwalk.RevWalk
 
 import scala.util.Try
 
@@ -29,13 +29,13 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
   def branch: String = repo.getBranch
 
   private def branchesRef: Seq[Ref] = {
-    import collection.JavaConverters._
-    porcelain.branchList.call.asScala
+    import collection.JavaConverters.*
+    porcelain.branchList.call.asScala.toSeq
   }
 
   def tags: Seq[Ref] = {
-    import collection.JavaConverters._
-    porcelain.tagList.call().asScala
+    import collection.JavaConverters.*
+    porcelain.tagList.call().asScala.toSeq
   }
 
   def checkoutBranch(branch: String): Unit = {
@@ -96,9 +96,9 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
   override def branches: Seq[String] = branchesRef.filter(_.getName.startsWith("refs/heads")).map(_.getName.drop(11))
 
   override def remoteBranches: Seq[String] = {
-    import collection.JavaConverters._
+    import collection.JavaConverters.*
     import org.eclipse.jgit.api.ListBranchCommand.ListMode
-    porcelain.branchList.setListMode(ListMode.REMOTE).call.asScala.filter(_.getName.startsWith("refs/remotes")).map(_.getName.drop(13))
+    porcelain.branchList.setListMode(ListMode.REMOTE).call.asScala.filter(_.getName.startsWith("refs/remotes")).map(_.getName.drop(13)).toSeq
   }
 
   override def remoteOrigin: String = {
@@ -131,9 +131,9 @@ object JGit {
 
   /** Creates a new git instance from a base directory. */
   def apply(base: File) =
-    try (new JGit({
+    try new JGit({
       new FileRepositoryBuilder().findGitDir(base).build
-    })) catch {
+    }) catch {
       // This is thrown if we never find the git base directory.  In that instance, we'll assume root is the base dir.
       case e: IllegalArgumentException =>
         val defaultGitDir = new File(base, ".git")

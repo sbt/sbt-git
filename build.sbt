@@ -1,5 +1,5 @@
 organization := "com.github.sbt"
-sonatypeProfileName := "com.github.sbt"
+//sonatypeProfileName := "com.github.sbt"
 name := "sbt-git"
 licenses := Seq(("BSD-2-Clause", url("https://opensource.org/licenses/BSD-2-Clause")))
 description := "An sbt plugin that offers git features directly inside sbt"
@@ -8,10 +8,11 @@ startYear := Some(2011)
 homepage := scmInfo.value map (_.browseUrl)
 scmInfo := Some(ScmInfo(url("https://github.com/sbt/sbt-git"), "scm:git:git@github.com:sbt/sbt-git.git"))
 
-crossSbtVersions := List("1.3.13")
+//crossSbtVersions := List("1.3.13")
 
-enablePlugins(GitVersioning, SbtPlugin)
-git.baseVersion := "1.0"
+enablePlugins(SbtPlugin)
+//TODO: enablePlugins(GitVersioning, SbtPlugin)
+//git.baseVersion := "1.0"
 
 libraryDependencies ++= Seq(
   "org.eclipse.jgit" % "org.eclipse.jgit" % "5.13.3.202401111512-r",
@@ -20,3 +21,4 @@ libraryDependencies ++= Seq(
 )
 
 scriptedLaunchOpts += s"-Dproject.version=${version.value}"
+scriptedBufferLog := false

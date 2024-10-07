@@ -1,8 +1,10 @@
 package com.github.sbt.git
 
-import sbt._
-import Keys._
-import sys.process.{ Process, ProcessLogger }
+import sbt.{internal, *}
+import Keys.*
+import sbt.internal.util.ConsoleAppender
+
+import sys.process.{Process, ProcessLogger}
 
 /** A mechanism of running git that simply shells out to the console. */
 object ConsoleGitRunner extends GitRunner {
@@ -17,15 +19,15 @@ object ConsoleGitRunner extends GitRunner {
 
   // in order to enable colors we trick git into thinking we're a pager, because it already knows we're not a tty
   val colorSupport: Seq[(String, String)] =
-    if(ConsoleLogger.formatEnabled) Seq("GIT_PAGER_IN_USE" -> "1")
+    if(ConsoleAppender.formatEnabledInEnv) Seq("GIT_PAGER_IN_USE" -> "1")
     else Seq.empty
 
   override def apply(args: String*)(cwd: File, log: Logger = ConsoleLogger()): String = {
     val gitLogger = new GitLogger(log)
     IO.createDirectory(cwd)
     val full = cmd ++ args
-    log.debug(cwd + "$ " + full.mkString(" "))
-    val code = Process(full, cwd, colorSupport :_*) ! gitLogger
+    log.debug(s"cwd$$ ${full.mkString(" ")}")
+    val code = Process(full, cwd, colorSupport*) ! gitLogger
     val result = gitLogger.flush(code)
     if(code != 0)
       throw new MessageOnlyException("Nonzero exit code (" + code + ") running git.")

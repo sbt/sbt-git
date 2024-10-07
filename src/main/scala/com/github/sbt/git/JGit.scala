@@ -29,13 +29,13 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
   def branch: String = repo.getBranch
 
   private def branchesRef: Seq[Ref] = {
-    import collection.JavaConverters._
-    porcelain.branchList.call.asScala
+    import scala.jdk.CollectionConverters._
+    porcelain.branchList.call.asScala.toSeq
   }
 
   def tags: Seq[Ref] = {
-    import collection.JavaConverters._
-    porcelain.tagList.call().asScala
+    import scala.jdk.CollectionConverters._
+    porcelain.tagList.call().asScala.toSeq
   }
 
   def checkoutBranch(branch: String): Unit = {
@@ -59,7 +59,7 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
     headCommit map (_.name)
 
   def currentTags: Seq[String] = {
-    import collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     for {
       hash <- headCommit.map(_.name).toSeq
       unpeeledTag <- tags
@@ -96,14 +96,14 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
   override def branches: Seq[String] = branchesRef.filter(_.getName.startsWith("refs/heads")).map(_.getName.drop(11))
 
   override def remoteBranches: Seq[String] = {
-    import collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     import org.eclipse.jgit.api.ListBranchCommand.ListMode
-    porcelain.branchList.setListMode(ListMode.REMOTE).call.asScala.filter(_.getName.startsWith("refs/remotes")).map(_.getName.drop(13))
+    porcelain.branchList.setListMode(ListMode.REMOTE).call.asScala.filter(_.getName.startsWith("refs/remotes")).map(_.getName.drop(13)).toSeq
   }
 
   override def remoteOrigin: String = {
     // same functionality as Process("git ls-remote --get-url origin").lines_!.head
-    import collection.JavaConverters._
+    import scala.jdk.CollectionConverters._
     porcelain.remoteList().call.asScala
       .filter(_.getName == "origin")
       .flatMap(_.getURIs.asScala)

@@ -3,30 +3,35 @@ package com.github.sbt.git
 import sbt.*
 import sbt.internal.util.Terminal
 
+import scala.util.Try
 import sys.process.{Process, ProcessLogger}
 
 /** A mechanism of running git that simply shells out to the console. */
 object ConsoleGitRunner extends GitRunner {
   // TODO - Something less lame here.
-  def isWindowsShell = {
-		val ostype = System.getenv("OSTYPE")
-		val isCygwin = ostype != null && ostype.toLowerCase.contains("cygwin")
-		val isWindows = System.getProperty("os.name", "").toLowerCase.contains("windows")
-		isWindows && !isCygwin
-	}
+  def isWindowsShell: Boolean = {
+    val ostype = System.getenv("OSTYPE")
+    val isCygwin = ostype != null && ostype.toLowerCase.contains("cygwin")
+    val isWindows = System.getProperty("os.name", "").toLowerCase.contains("windows")
+    isWindows && !isCygwin
+  }
   private lazy val cmd = if(isWindowsShell) Seq("cmd", "/c", "git") else Seq("git")
 
   // in order to enable colors we trick git into thinking we're a pager, because it already knows we're not a tty
   val colorSupport: Seq[(String, String)] =
-    if(Terminal.console.isAnsiSupported) Seq("GIT_PAGER_IN_USE" -> "1")
-    else Seq.empty
+    Try{
+      if(Terminal.console.isAnsiSupported)
+        Seq("GIT_PAGER_IN_USE" -> "1")
+      else
+        Seq.empty
+    }.getOrElse(Seq.empty)
 
   override def apply(args: String*)(cwd: File, log: Logger = ConsoleLogger()): String = {
     val gitLogger = new GitLogger(log)
     IO.createDirectory(cwd)
     val full = cmd ++ args
     log.debug(cwd.toString + "$ " + full.mkString(" "))
-    val code = Process(full, cwd, colorSupport :_*) ! gitLogger
+    val code = Process(full, cwd, colorSupport *) ! gitLogger
     val result = gitLogger.flush(code)
     if(code != 0)
       throw new MessageOnlyException("Nonzero exit code (" + code + ") running git.")
@@ -38,7 +43,7 @@ object ConsoleGitRunner extends GitRunner {
   // reduce log level for git process
   private class GitLogger(log: Logger) extends ProcessLogger {
     import scala.collection.mutable.ListBuffer
-    import Level.{ Debug, Info, Warn, Error, Value => LogLevel }
+    import Level.{ Debug, Info, Error, Value as LogLevel }
 
     private val msgs: ListBuffer[(LogLevel, String)] = new ListBuffer()
 

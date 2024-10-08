@@ -2,7 +2,7 @@ package com.github.sbt.git
 
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
-import org.eclipse.jgit.api.{Git => PGit}
+import org.eclipse.jgit.api.Git as PGit
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -11,6 +11,7 @@ import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.revwalk.{RevCommit, RevWalk}
 
+import scala.jdk.CollectionConverters.*
 import scala.util.Try
 
 
@@ -29,12 +30,10 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
   def branch: String = repo.getBranch
 
   private def branchesRef: Seq[Ref] = {
-    import scala.jdk.CollectionConverters._
     porcelain.branchList.call.asScala.toSeq
   }
 
   def tags: Seq[Ref] = {
-    import scala.jdk.CollectionConverters._
     porcelain.tagList.call().asScala.toSeq
   }
 
@@ -59,7 +58,6 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
     headCommit map (_.name)
 
   def currentTags: Seq[String] = {
-    import scala.jdk.CollectionConverters._
     for {
       hash <- headCommit.map(_.name).toSeq
       unpeeledTag <- tags
@@ -71,7 +69,7 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
   }
 
 
-  def tagHash(tag: Ref) = {
+  def tagHash(tag: Ref): String = {
     // Annotated (signed) and plain tags work differently,
     // plain ones have the null PeeledObjectId
     val peeled = repo.getRefDatabase.peel(tag)
@@ -88,7 +86,7 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
     Try(Option(porcelain
       .describe()
       .setTags(true)
-      .setMatch(patterns:_*)
+      .setMatch(patterns *)
       .call())).getOrElse(None)
 
   override def hasUncommittedChanges: Boolean = porcelain.status.call.hasUncommittedChanges
@@ -96,14 +94,12 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
   override def branches: Seq[String] = branchesRef.filter(_.getName.startsWith("refs/heads")).map(_.getName.drop(11))
 
   override def remoteBranches: Seq[String] = {
-    import scala.jdk.CollectionConverters._
     import org.eclipse.jgit.api.ListBranchCommand.ListMode
     porcelain.branchList.setListMode(ListMode.REMOTE).call.asScala.filter(_.getName.startsWith("refs/remotes")).map(_.getName.drop(13)).toSeq
   }
 
   override def remoteOrigin: String = {
     // same functionality as Process("git ls-remote --get-url origin").lines_!.head
-    import scala.jdk.CollectionConverters._
     porcelain.remoteList().call.asScala
       .filter(_.getName == "origin")
       .flatMap(_.getURIs.asScala)
@@ -130,12 +126,12 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
 object JGit {
 
   /** Creates a new git instance from a base directory. */
-  def apply(base: File) =
-    try (new JGit({
+  def apply(base: File): JGit =
+    try new JGit({
       new FileRepositoryBuilder().findGitDir(base).build
-    })) catch {
+    }) catch {
       // This is thrown if we never find the git base directory.  In that instance, we'll assume root is the base dir.
-      case e: IllegalArgumentException =>
+      case _: IllegalArgumentException =>
         val defaultGitDir = new File(base, ".git")
         new JGit({ new FileRepositoryBuilder().setGitDir(defaultGitDir).build()})
     }

@@ -29,27 +29,16 @@ jobs:
       with:
         distribution: "${{ matrix.distribution }}"
         java-version: "${{ matrix.java }}"
-    - name: Coursier cache
-      uses: coursier/cache-action@v5
+        cache: sbt
     - name: Build and test (sbt 1.x)
       if: ${{ matrix.sbt == 1 }}
       shell: bash
       run: |
         gpg --import test-key.gpg
         sbt -v ++2.12.x clean test scripted
-        rm -rf "$HOME/.ivy2/local" || true
-        find $HOME/Library/Caches/Coursier/v1        -name "ivydata-*.properties" -delete || true
-        find $HOME/.ivy2/cache                       -name "ivydata-*.properties" -delete || true
-        find $HOME/.cache/coursier/v1                -name "ivydata-*.properties" -delete || true
-        find $HOME/.sbt
     - name: Build and test (sbt 2.x)
       if: ${{ matrix.sbt == 2 }}
       shell: bash
       run: |
         gpg --import test-key.gpg
         sbt -v ++3.x clean test scripted
-        rm -rf "$HOME/.ivy2/local" || true
-        find $HOME/Library/Caches/Coursier/v1        -name "ivydata-*.properties" -delete || true
-        find $HOME/.ivy2/cache                       -name "ivydata-*.properties" -delete || true
-        find $HOME/.cache/coursier/v1                -name "ivydata-*.properties" -delete || true
-        find $HOME/.sbt

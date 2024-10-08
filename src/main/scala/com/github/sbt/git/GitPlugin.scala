@@ -2,7 +2,6 @@ package com.github.sbt.git
 
 import sbt._
 import Keys._
-import sys.process.Process
 
 /** This plugin has all the basic 'git' functionality for other plugins. */
 object SbtGit {
@@ -170,7 +169,7 @@ object SbtGit {
   def useJGit: Setting[_] = ThisBuild / gitRunner := JGitRunner
 
   /** Setting to use console git for readable ops, to allow working with git worktrees */
-  def useReadableConsoleGit: Setting[_] = useConsoleForROGit in ThisBuild := true
+  def useReadableConsoleGit: Setting[_] = ThisBuild / useConsoleForROGit := true
 
   /** Adapts the project prompt to show the current project name *and* the current git branch. */
   def showCurrentGitBranch: Setting[_] =

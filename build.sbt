@@ -8,7 +8,10 @@ startYear := Some(2011)
 homepage := scmInfo.value map (_.browseUrl)
 scmInfo := Some(ScmInfo(url("https://github.com/sbt/sbt-git"), "scm:git:git@github.com:sbt/sbt-git.git"))
 
-crossSbtVersions := List("1.3.13")
+lazy val scala212 = "2.12.20"
+lazy val scala3 = "3.3.4"
+
+crossScalaVersions := Seq(scala212, scala3)
 
 enablePlugins(GitVersioning, SbtPlugin)
 git.baseVersion := "1.0"
@@ -18,5 +21,12 @@ libraryDependencies ++= Seq(
   "com.michaelpollmeier" % "versionsort" % "1.0.11",
   "org.scalameta" %% "munit" % "1.0.2" % Test
 )
+
+(pluginCrossBuild / sbtVersion) := {
+  scalaBinaryVersion.value match {
+    case "2.12" => "1.5.8"
+    case _      => "2.0.0-M2"
+  }
+}
 
 scriptedLaunchOpts += s"-Dproject.version=${version.value}"

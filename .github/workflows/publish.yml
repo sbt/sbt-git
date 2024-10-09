@@ -21,6 +21,7 @@ jobs:
         distribution: temurin
         java-version: 8
         cache: sbt
+    - uses: sbt/setup-sbt@v1
     - name: Test
       run: |
         gpg --import test-key.gpg

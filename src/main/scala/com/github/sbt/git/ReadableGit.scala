@@ -21,7 +21,7 @@ trait GitReadonlyInterface {
   /** Whether there are uncommitted changes (i.e. whether any tracked file has changed) */
   def hasUncommittedChanges: Boolean
   /** The local branches */
-  def branches : Seq[String]
+  def branches: Seq[String]
   /** The remote branches */
   def remoteBranches: Seq[String]
   /** The remote origin as returned by `git ls-remote --get-url origin`. */
@@ -29,7 +29,6 @@ trait GitReadonlyInterface {
   /** The message of current commit **/
   def headCommitMessage: Option[String]
 }
-
 
 /** Our default readable git uses JGit instead of a process-forking and reading, for speed/safety. However, we allow
   * overriding, since JGit doesn't currently work with git worktrees

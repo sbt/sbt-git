@@ -14,13 +14,12 @@ import org.eclipse.jgit.revwalk.{RevCommit, RevWalk}
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
 
-
 // TODO - This class needs a bit more work, but at least it lets us use porcelain and wrap some higher-level
 // stuff on top of JGit, as needed for our plugin.
 final class JGit(val repo: Repository) extends GitReadonlyInterface {
 
   // forcing initialization of shallow commits to avoid concurrent modification issue. See issue #85
-  //repo.getObjectDatabase.newReader.getShallowCommits()
+  // repo.getObjectDatabase.newReader.getShallowCommits()
   // Instead we've thrown a lock around sbt's usage of this class.
 
   val porcelain = new PGit(repo)
@@ -40,14 +39,17 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
   def checkoutBranch(branch: String): Unit = {
     // First, if remote branch exists, we auto-track it.
     val exists = branchesRef exists (_.getName == ("refs/heads/" + branch))
-    if(exists)  porcelain.checkout.setName(branch).call()
+    if (exists) porcelain.checkout.setName(branch).call()
     else {
       // TODO - find upstream...
       import org.eclipse.jgit.api.CreateBranchCommand.SetupUpstreamMode
       val upstream = "origin/" + branch
-      porcelain.checkout.setCreateBranch(true).setName(branch)
-                .setUpstreamMode(SetupUpstreamMode.SET_UPSTREAM)
-                .setStartPoint(upstream).call()
+      porcelain.checkout
+        .setCreateBranch(true)
+        .setName(branch)
+        .setUpstreamMode(SetupUpstreamMode.SET_UPSTREAM)
+        .setStartPoint(upstream)
+        .call()
     }
   }
 
@@ -68,7 +70,6 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
     } yield ref drop 10
   }
 
-
   def tagHash(tag: Ref): String = {
     // Annotated (signed) and plain tags work differently,
     // plain ones have the null PeeledObjectId
@@ -83,11 +84,15 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
 
   override def describedVersion: Option[String] = describedVersion(Nil)
   override def describedVersion(patterns: Seq[String]): Option[String] =
-    Try(Option(porcelain
-      .describe()
-      .setTags(true)
-      .setMatch(patterns *)
-      .call())).getOrElse(None)
+    Try(
+      Option(
+        porcelain
+          .describe()
+          .setTags(true)
+          .setMatch(patterns*)
+          .call()
+      )
+    ).getOrElse(None)
 
   override def hasUncommittedChanges: Boolean = porcelain.status.call.hasUncommittedChanges
 
@@ -100,7 +105,10 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
 
   override def remoteOrigin: String = {
     // same functionality as Process("git ls-remote --get-url origin").lines_!.head
-    porcelain.remoteList().call.asScala
+    porcelain
+      .remoteList()
+      .call
+      .asScala
       .filter(_.getName == "origin")
       .flatMap(_.getURIs.asScala)
       .headOption
@@ -108,7 +116,9 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
       .getOrElse("origin")
   }
 
-  override def headCommitMessage: Option[String] = Try(Option(porcelain.log().setMaxCount(1).call().iterator().next().getFullMessage)).toOption.flatten
+  override def headCommitMessage: Option[String] = Try(
+    Option(porcelain.log().setMaxCount(1).call().iterator().next().getFullMessage)
+  ).toOption.flatten
 
   override def headCommitDate: Option[String] = {
     val walk = new RevWalk(repo)
@@ -127,13 +137,15 @@ object JGit {
 
   /** Creates a new git instance from a base directory. */
   def apply(base: File): JGit =
-    try new JGit({
-      new FileRepositoryBuilder().findGitDir(base).build
-    }) catch {
+    try
+      new JGit({
+        new FileRepositoryBuilder().findGitDir(base).build
+      })
+    catch {
       // This is thrown if we never find the git base directory.  In that instance, we'll assume root is the base dir.
       case _: IllegalArgumentException =>
         val defaultGitDir = new File(base, ".git")
-        new JGit({ new FileRepositoryBuilder().setGitDir(defaultGitDir).build()})
+        new JGit({ new FileRepositoryBuilder().setGitDir(defaultGitDir).build() })
     }
 
   /** Clones from a given URI into a local directory of your choosing. */

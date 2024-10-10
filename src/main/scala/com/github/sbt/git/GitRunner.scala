@@ -1,6 +1,6 @@
 package com.github.sbt.git
 
-import sbt._
+import sbt.*
 
 /** An interface to run git commands. */
 trait GitRunner {
@@ -12,7 +12,7 @@ trait GitRunner {
   def commitAndPush(msg: String, tag: Option[String] = None)(repo: File, log: Logger): Unit = {
     apply("add", ".")(repo, log)
     apply("commit", "-m", msg, "--allow-empty")(repo, log)
-    for(tagString <- tag) apply("tag", tagString)(repo, log)
+    for (tagString <- tag) apply("tag", tagString)(repo, log)
     push(repo, log)
   }
   /** Pushes local commits to the remote branch. */
@@ -21,8 +21,9 @@ trait GitRunner {
   def pull(cwd: File, log: Logger) = apply("pull")(cwd, log)
   /** Updates the cwd from a remote branch. If the local git repo doesn't exist, will clone it into existence. */
   def updated(remote: String, branch: Option[String], cwd: File, log: Logger): Unit =
-      if(cwd.exists) pull(cwd, log)
-      else branch match {
+    if (cwd.exists) pull(cwd, log)
+    else
+      branch match {
         case None => apply("clone", remote, ".")(cwd, log)
         case Some(b) => apply("clone", "-b", b, remote, ".")(cwd, log)
       }

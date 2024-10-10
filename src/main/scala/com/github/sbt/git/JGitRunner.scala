@@ -1,7 +1,7 @@
 package com.github.sbt.git
 
-import sbt._
-import Keys._
+import sbt.*
+import Keys.*
 
 /** A mechanism to run GIT using the pure java JGit implementation. */
 object JGitRunner extends GitRunner {
@@ -10,10 +10,10 @@ object JGitRunner extends GitRunner {
     args.headOption match {
       // For now, let's just use the JGIT comand line and see what happens.
       // Eventually we can aim to speed up commands...
-      //case Some("push") => push(args drop 1)(cwd, log)
-      //case Some("pull") => pull(args drop 1)(cwd, log)
-      //case Some("clone") => clone(args drop 1)(cwd, log)
-      case _ =>  forkJGitMain(args:_*)(cwd, log)
+      // case Some("push") => push(args drop 1)(cwd, log)
+      // case Some("pull") => pull(args drop 1)(cwd, log)
+      // case Some("clone") => clone(args drop 1)(cwd, log)
+      case _ => forkJGitMain(args*)(cwd, log)
     }
   }
 
@@ -49,7 +49,7 @@ object JGitRunner extends GitRunner {
     ""
   }
 
-   private def push(args: Seq[String])(cwd: File, log: Logger = ConsoleLogger()): String = {
+  private def push(args: Seq[String])(cwd: File, log: Logger = ConsoleLogger()): String = {
     val git = JGit(cwd)
     // TODO - Parse options...
     // TODO - Set logging/progress monitor.
@@ -59,23 +59,28 @@ object JGitRunner extends GitRunner {
 
   private def forkJGitMain(args: String*)(cwd: File, log: Logger = ConsoleLogger()): String =
     getClass.getClassLoader match {
-       case cl: java.net.URLClassLoader =>
-         val cp = cl.getURLs map (_.getFile) mkString ":"
-         val baos = new java.io.ByteArrayOutputStream
-			// NOTE: this will always return 0 until sbt 0.13.1 due to the use of CustomOutput
-         val code = Fork.java.fork(ForkOptions(
-          javaHome = None,
-          outputStrategy = Some(CustomOutput(baos)),
-          bootJars = Vector.empty[File],
-          workingDirectory = Some(cwd),
-          runJVMOptions = Vector.empty[String],
-          connectInput = false,
-          envVars = Map.empty[String, String]),
-          Vector("-classpath", cp, "org.eclipse.jgit.pgm.Main") ++ args).exitValue()
-         val result = baos.toString
-         log.info(result)
-         if(code == 0) result else throw new MessageOnlyException("Nonzero exit code (" + code + ") running JGit.")
-       case _ => sys.error("Could not find classpath for JGit!")
+      case cl: java.net.URLClassLoader =>
+        val cp = cl.getURLs map (_.getFile) mkString ":"
+        val baos = new java.io.ByteArrayOutputStream
+        // NOTE: this will always return 0 until sbt 0.13.1 due to the use of CustomOutput
+        val code = Fork.java
+          .fork(
+            ForkOptions(
+              javaHome = None,
+              outputStrategy = Some(CustomOutput(baos)),
+              bootJars = Vector.empty[File],
+              workingDirectory = Some(cwd),
+              runJVMOptions = Vector.empty[String],
+              connectInput = false,
+              envVars = Map.empty[String, String]
+            ),
+            Vector("-classpath", cp, "org.eclipse.jgit.pgm.Main") ++ args
+          )
+          .exitValue()
+        val result = baos.toString
+        log.info(result)
+        if (code == 0) result else throw new MessageOnlyException("Nonzero exit code (" + code + ") running JGit.")
+      case _ => sys.error("Could not find classpath for JGit!")
     }
 
   override def toString = "jgit"

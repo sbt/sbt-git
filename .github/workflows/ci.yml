@@ -36,10 +36,10 @@ jobs:
       shell: bash
       run: |
         gpg --import test-key.gpg
-        sbt -v ++2.12.x clean test scripted
+        sbt -v ++2.12.x clean scalafmtSbtCheck scalafmtCheckAll test scripted
     - name: Build and test (sbt 2.x)
       if: ${{ matrix.sbt == 2 }}
       shell: bash
       run: |
         gpg --import test-key.gpg
-        sbt -v ++3.x clean test scripted
+        sbt -v ++3.x clean scalafmtCheckAll test scripted

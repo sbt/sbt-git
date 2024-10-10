@@ -111,8 +111,8 @@ object SbtGit {
   // Build settings.
   import GitKeys._
   def buildSettings = Seq(
-    useConsoleForROGit := false,
-    gitReader := new DefaultReadableGit(baseDirectory.value, if (useConsoleForROGit.value) Some(new ConsoleGitReadableOnly(ConsoleGitRunner, file("."), sLog.value)) else None),
+    useConsoleForROGit := isGitLinkedRepo(baseDirectory.value),
+    gitReader := new DefaultReadableGit(baseDirectory.value, if (useConsoleForROGit.value) Some(new ConsoleGitReadableOnly(ConsoleGitRunner, baseDirectory.value, sLog.value)) else None),
     gitRunner := ConsoleGitRunner,
     gitHeadCommit := gitReader.value.withGit(_.headCommitSha),
     gitHeadMessage := gitReader.value.withGit(_.headCommitMessage),
@@ -125,6 +125,21 @@ object SbtGit {
     ThisBuild / gitUncommittedChanges := gitReader.value.withGit(_.hasUncommittedChanges),
     scmInfo := parseScmInfo(gitReader.value.withGit(_.remoteOrigin))
   )
+
+  private def isGitLinkedRepo(dir: File): Boolean =
+    isGitWorktreeDir(Option(System.getenv("GIT_DIR")).fold(dir)(file))
+
+  @scala.annotation.tailrec
+  private def isGitWorktreeDir(dir: File): Boolean = {
+    val maybeGit = dir / ".git"
+    // In a linked worktree, .git is a file that contains the path to the main worktree.
+    if (maybeGit.exists()) maybeGit.isFile
+    else Option(dir.getParentFile) match {
+      case Some(parent) => isGitWorktreeDir(parent)
+      case None => false
+    }
+  }
+
   private[sbt] def parseScmInfo(remoteOrigin: String): Option[ScmInfo] = {
     val user = """(?:[^@\/]+@)?"""
     val domain = """([^\/]+)"""

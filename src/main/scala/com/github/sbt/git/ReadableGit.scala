@@ -36,7 +36,7 @@ trait GitReadonlyInterface {
 final class DefaultReadableGit(base: sbt.File, gitOverride: Option[GitReadonlyInterface]) extends ReadableGit {
   // TODO - Should we cache git, or just create on each request?
   // For now, let's cache.
-  private[this] val git = gitOverride getOrElse JGit(base)
+  private val git = gitOverride getOrElse JGit(base)
   /** Use the git read-only interface. */
   def withGit[A](f: GitReadonlyInterface => A): A =
     // JGit has concurrency issues so we synchronize access to it.

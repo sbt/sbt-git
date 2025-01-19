@@ -1,4 +1,3 @@
-
 val location = file("..").toURI
 
 val sbtGit = RootProject(location)

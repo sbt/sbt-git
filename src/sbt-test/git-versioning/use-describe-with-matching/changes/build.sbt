@@ -5,7 +5,7 @@ git.versionProperty := "DUMMY_BUILD_VERSION"
 git.useGitDescribe := true
 git.gitDescribePatterns := Seq("module-*")
 git.gitTagToVersionNumber := { tag =>
-  if(tag matches "module-.*") Some(tag drop 7)
+  if (tag matches "module-.*") Some(tag drop 7)
   else None
 }
 

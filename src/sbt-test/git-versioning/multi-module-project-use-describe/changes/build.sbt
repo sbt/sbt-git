@@ -1,10 +1,8 @@
-
-
 val commonSettings = Seq(
   git.useGitDescribe := true,
   git.gitDescribePatterns := Seq(s"${name.value}-*"),
   git.gitTagToVersionNumber := { tag =>
-    if(tag matches s"${name.value}-[0-9].*") Some(tag.replace(s"${name.value}-", ""))
+    if (tag matches s"${name.value}-[0-9].*") Some(tag.replace(s"${name.value}-", ""))
     else None
   }
 )

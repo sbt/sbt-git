@@ -9,7 +9,7 @@ homepage := scmInfo.value map (_.browseUrl)
 scmInfo := Some(ScmInfo(url("https://github.com/sbt/sbt-git"), "scm:git:git@github.com:sbt/sbt-git.git"))
 
 lazy val scala212 = "2.12.20"
-lazy val scala3 = "3.6.3"
+lazy val scala3 = "3.6.4"
 
 crossScalaVersions := Seq(scala212, scala3)
 

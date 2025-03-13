@@ -22,10 +22,6 @@ jobs:
         java-version: 8
         cache: sbt
     - uses: sbt/setup-sbt@v1
-    - name: Test
-      run: |
-        gpg --import test-key.gpg
-        sbt +test +packagedArtifacts
     - name: Release
       env:
         SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}

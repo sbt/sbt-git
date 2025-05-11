@@ -19,7 +19,7 @@ git.baseVersion := "1.0"
 libraryDependencies ++= Seq(
   "org.eclipse.jgit" % "org.eclipse.jgit" % "5.13.3.202401111512-r",
   "com.michaelpollmeier" % "versionsort" % "1.0.16",
-  "org.scalameta" %% "munit" % "1.0.3" % Test
+  "org.scalameta" %% "munit" % "1.0.4" % Test
 )
 
 (pluginCrossBuild / sbtVersion) := {

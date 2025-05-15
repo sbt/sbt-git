@@ -101,9 +101,9 @@ object SbtGit {
 
     val prompt: State => String = { state =>
       val extracted = Project.extract(state)
-      val reader = extracted get GitKeys.gitReader
-      val dir = extracted get baseDirectory
-      val name = extracted get Keys.name
+      val reader = extracted `get` GitKeys.gitReader
+      val dir = extracted `get` baseDirectory
+      val name = extracted `get` Keys.name
       if (isGitRepo(dir)) {
         val branch = reader.withGit(_.branch)
         name + "(" + branch + ")> "
@@ -285,7 +285,7 @@ object SbtGit {
     val formattedDateVersion = ThisBuild / GitKeys.formattedDateVersion
 
     val defaultTagByVersionStrategy: String => Option[String] = { tag =>
-      if (tag matches "v[0-9].*") Some(tag drop 1)
+      if (tag `matches` "v[0-9].*") Some(tag drop 1)
       else None
     }
 
@@ -295,8 +295,8 @@ object SbtGit {
 
     def defaultFormatDateVersion(baseVersion: Option[String], date: java.util.Date): String = {
       val df = new java.text.SimpleDateFormat("yyyyMMdd'T'HHmmss")
-      df setTimeZone java.util.TimeZone.getTimeZone("GMT")
-      baseVersion.map(_ + "-").getOrElse("") + (df format (new java.util.Date))
+      df.setTimeZone(java.util.TimeZone.getTimeZone("GMT"))
+      baseVersion.map(_ + "-").getOrElse("") + (df.format(new java.util.Date))
     }
 
     def flaggedOptional(flag: Boolean, value: Option[String]): Option[String] =

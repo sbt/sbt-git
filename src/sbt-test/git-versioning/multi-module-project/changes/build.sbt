@@ -1,6 +1,5 @@
 def proj(name: String) = Project(name, file(name)).enablePlugins(GitVersioning)
 
-
 lazy val a = proj("a")
 lazy val b = proj("b")
 

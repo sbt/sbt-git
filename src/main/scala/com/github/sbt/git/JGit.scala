@@ -66,7 +66,7 @@ final class JGit(val repo: Repository) extends GitReadonlyInterface {
       taghash = tagHash(unpeeledTag)
       if taghash == hash
       ref = unpeeledTag.getName
-      if ref startsWith "refs/tags/"
+      if ref `startsWith` "refs/tags/"
     } yield ref drop 10
   }
 

@@ -12,4 +12,3 @@ expectAMessage := {
   val headMessage = git.gitHeadMessage.value
   assert(headMessage.get == expectedMessage, s"Expected head message to equal '${expectedMessage}', found ${headMessage}")
 }
-

@@ -12,7 +12,7 @@ lazy val scala3 = "3.6.4"
 
 crossScalaVersions := Seq(scala212, scala3)
 
-enablePlugins(SbtPlugin)
+enablePlugins(GitVersioning, SbtPlugin)
 git.baseVersion := "1.0"
 
 libraryDependencies ++= Seq(

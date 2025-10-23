@@ -22,6 +22,7 @@ object SbtGit {
     val gitUncommittedChanges = SettingKey[Boolean]("git-uncommitted-changes", "Whether there are uncommitted changes.")
 
     // A Mechanism to run Git directly.
+    @transient
     val gitRunner = TaskKey[GitRunner]("git-runner", "The mechanism used to run git in the current build.")
 
     // Keys associated with setting a version number.

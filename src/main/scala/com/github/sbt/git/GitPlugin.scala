@@ -3,6 +3,7 @@ package com.github.sbt.git
 import sbt.*
 import Keys.*
 
+
 /** This plugin has all the basic 'git' functionality for other plugins. */
 object SbtGit {
 
@@ -318,7 +319,12 @@ object SbtGit {
         } yield version
 
       // NOTE - Selecting the last tag or the first tag should be an option.
-      val highestVersion = versions.sortWith { versionsort.VersionHelper.compare(_, _) > 0 }.headOption
+      val highestVersion =
+        versions
+          .map(Version.parse)
+          .sortWith(_.compareTo(_) > 0)
+          .headOption
+
       highestVersion.map(_ + suffix)
     }
 

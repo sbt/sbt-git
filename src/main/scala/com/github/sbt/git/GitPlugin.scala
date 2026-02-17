@@ -112,7 +112,7 @@ object SbtGit {
   // Build settings.
   import GitKeys._
   def buildSettings = Seq(
-    useConsoleForROGit := false,
+    useConsoleForROGit := sys.env.contains("SBT_GIT_USE_CONSOLE_FOR_RO_GIT"),
     gitReader := new DefaultReadableGit(baseDirectory.value, if (useConsoleForROGit.value) Some(new ConsoleGitReadableOnly(ConsoleGitRunner, file("."), sLog.value)) else None),
     gitRunner := ConsoleGitRunner,
     gitHeadCommit := gitReader.value.withGit(_.headCommitSha),

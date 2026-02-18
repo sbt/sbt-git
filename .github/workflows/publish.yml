@@ -14,12 +14,16 @@ jobs:
       JVM_OPTS:  -Xms2048M -Xmx2048M -Xss6M -XX:ReservedCodeCacheSize=256M -Dfile.encoding=UTF-8
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
-    - name: Coursier cache
-      uses: coursier/cache-action@v5
-    - name: Test
-      run: |
-        sbt +test +packagedArtifacts
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+    - name: Setup JDK
+      uses: actions/setup-java@v5
+      with:
+        distribution: temurin
+        java-version: 17
+        cache: sbt
+    - uses: sbt/setup-sbt@v1
     - name: Release
       env:
         SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
@@ -27,6 +31,5 @@ jobs:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
         CI_CLEAN: clean
-        CI_RELEASE: +publishSigned
       run: |
         sbt ci-release

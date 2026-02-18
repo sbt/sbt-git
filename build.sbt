@@ -8,7 +8,7 @@ homepage := scmInfo.value map (_.browseUrl)
 scmInfo := Some(ScmInfo(url("https://github.com/sbt/sbt-git"), "scm:git:git@github.com:sbt/sbt-git.git"))
 
 lazy val scala212 = "2.12.21"
-lazy val scala3 = "3.7.4"
+lazy val scala3 = "3.8.1"
 
 crossScalaVersions := Seq(scala212, scala3)
 
@@ -24,7 +24,18 @@ libraryDependencies ++= Seq(
 (pluginCrossBuild / sbtVersion) := {
   scalaBinaryVersion.value match {
     case "2.12" => "1.5.8"
-    case _ => "2.0.0-RC3"
+    case _ => "2.0.0-RC9"
+  }
+}
+
+scalacOptions ++= {
+  scalaBinaryVersion.value match {
+    case "2.12" =>
+      Seq(
+        "-release:8"
+      )
+    case "3" =>
+      Nil
   }
 }
 

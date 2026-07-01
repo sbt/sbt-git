@@ -1,5 +1,7 @@
 package com.github.sbt.git
 
+import scala.util.Try
+
 import sbt.*
 import Keys.*
 
@@ -8,7 +10,6 @@ object SbtGit {
 
   object GitKeys {
     // Read-only git settings and values for use in other build settings.
-    // Note: These are all grabbed using jgit currently.
     val gitReader = SettingKey[ReadableGit]("git-reader", "This gives us a read-only view of the git repository.")
     val gitBranch = SettingKey[Option[String]]("git-branch", "Target branch of a git operation")
     val gitCurrentBranch = SettingKey[String]("git-current-branch", "The current branch for this project.")
@@ -20,9 +21,24 @@ object SbtGit {
     val gitDescribedVersion = SettingKey[Option[String]]("git-described-version", "Version as returned by `git describe --tags`.")
     val gitUncommittedChanges = SettingKey[Boolean]("git-uncommitted-changes", "Whether there are uncommitted changes.")
 
+    @transient
+    val gitReadBackend = SettingKey[GitBackend](
+      "git-read-backend",
+      "Selects the Git implementation used to read repository metadata such as HEAD, tags, branch, and dirty status."
+    )
+
     // A Mechanism to run Git directly.
     @transient
     val gitRunner = TaskKey[GitRunner]("git-runner", "The mechanism used to run git in the current build.")
+    @transient
+    val gitOperationBackend = SettingKey[GitBackend](
+      "git-operation-backend",
+      "Selects the Git implementation used for explicit git operations such as clone, pull, push, and the sbt git command."
+    )
+    private[sbt] val systemGitAvailableOverride = SettingKey[Option[Boolean]](
+      "git-system-git-available-override",
+      "Internal test hook for overriding whether system git is detected."
+    )
 
     // Keys associated with setting a version number.
     val useGitDescribe = SettingKey[Boolean]("use-git-describe", "Get version by calling `git describe` on the repository")
@@ -44,8 +60,10 @@ object SbtGit {
     // The remote repository we're using.
     val gitRemoteRepo = SettingKey[String]("git-remote-repo", "The remote git repository associated with this project")
 
-    // Git worktree workaround
-    val useConsoleForROGit = SettingKey[Boolean]("console-ro-runner", "Whether to shell out to git for ro ops in the current build.")
+    val useConsoleForROGit = SettingKey[Boolean](
+      "console-ro-runner",
+      "Deprecated compatibility setting that forces read-only operations to use the system git executable."
+    )
   }
 
   object GitCommand {
@@ -116,12 +134,26 @@ object SbtGit {
   // Build settings.
   import GitKeys.*
   def buildSettings = Seq(
+    gitReadBackend := GitBackend.SystemGitFirst,
+    gitOperationBackend := GitBackend.SystemGitFirst,
+    systemGitAvailableOverride := None,
     useConsoleForROGit := sys.env.contains("SBT_GIT_USE_CONSOLE_FOR_RO_GIT"),
-    gitReader := new DefaultReadableGit(
-      baseDirectory.value,
-      if (useConsoleForROGit.value) Some(new ConsoleGitReadableOnly(ConsoleGitRunner, file("."), sLog.value)) else None
-    ),
-    gitRunner := ConsoleGitRunner,
+    gitReader := {
+      val base = baseDirectory.value
+      val log = sLog.value
+      val available = detectedSystemGitAvailable(systemGitAvailableOverride.value, base, log)
+      val readable = available && isSystemGitReadable(base, log)
+      new DefaultReadableGit(
+        base,
+        if (useSystemGitForReads(useConsoleForROGit.value, gitReadBackend.value, readable))
+          Some(new ConsoleGitReadableOnly(ConsoleGitRunner, base, log))
+        else None
+      )
+    },
+    gitRunner := {
+      val available = detectedSystemGitAvailable(systemGitAvailableOverride.value, baseDirectory.value, sLog.value)
+      selectGitRunner(gitOperationBackend.value, available)
+    },
     gitHeadCommit := gitReader.value.withGit(_.headCommitSha),
     gitHeadMessage := gitReader.value.withGit(_.headCommitMessage),
     gitHeadCommitDate := gitReader.value.withGit(_.headCommitDate),
@@ -135,6 +167,29 @@ object SbtGit {
     ThisBuild / gitUncommittedChanges := gitReader.value.withGit(_.hasUncommittedChanges),
     scmInfo := parseScmInfo(gitReader.value.withGit(_.remoteOrigin))
   )
+
+  private[sbt] def isSystemGitAvailable(dir: File, log: Logger): Boolean =
+    Try(ConsoleGitRunner("--version")(dir, log)).isSuccess
+
+  private[sbt] def detectedSystemGitAvailable(overrideValue: Option[Boolean], dir: File, log: Logger): Boolean =
+    overrideValue.getOrElse(isSystemGitAvailable(dir, log))
+
+  private[sbt] def isSystemGitReadable(dir: File, log: Logger): Boolean =
+    Try(ConsoleGitRunner("rev-parse", "--git-dir")(dir, log)).isSuccess
+
+  private[sbt] def useSystemGitForReads(forceSystemGit: Boolean, backend: GitBackend, systemGitAvailable: Boolean): Boolean =
+    forceSystemGit || useSystemGit(backend, systemGitAvailable)
+
+  private[sbt] def selectGitRunner(backend: GitBackend, systemGitAvailable: Boolean): GitRunner =
+    if (useSystemGit(backend, systemGitAvailable)) ConsoleGitRunner else JGitRunner
+
+  private[sbt] def useSystemGit(backend: GitBackend, systemGitAvailable: Boolean): Boolean =
+    backend match {
+      case GitBackend.SystemGitFirst => systemGitAvailable
+      case GitBackend.SystemGitOnly => true
+      case GitBackend.JGitOnly => false
+    }
+
   private[sbt] def parseScmInfo(remoteOrigin: String): Option[ScmInfo] = {
     val user = """(?:[^@\/]+@)?"""
     val domain = """([^\/]+)"""
@@ -175,10 +230,54 @@ object SbtGit {
     }
   )
 
+  /** Use the system git executable for read-only repository metadata.
+    *
+    * This is deterministic: if system git is unavailable, the build fails
+    * instead of falling back to JGit.
+    */
+  def useSystemGitOnlyForReads: Setting[?] =
+    ThisBuild / gitReadBackend := GitBackend.SystemGitOnly
+
+  /** Use JGit for read-only repository metadata.
+    *
+    * This is deterministic: sbt-git will not shell out to system git for
+    * reads, even if JGit cannot handle the repository layout.
+    */
+  def useJGitOnlyForReads: Setting[?] =
+    ThisBuild / gitReadBackend := GitBackend.JGitOnly
+
+  /** Prefer system git for read-only repository metadata, falling back to JGit
+    * if system git is unavailable. This is the default.
+    */
+  def useSystemGitFirstForReads: Setting[?] =
+    ThisBuild / gitReadBackend := GitBackend.SystemGitFirst
+
+  /** Use the system git executable for explicit git operations.
+    *
+    * This is deterministic: if system git is unavailable, the build fails
+    * instead of falling back to JGit.
+    */
+  def useSystemGitOnlyForOperations: Setting[?] =
+    ThisBuild / gitOperationBackend := GitBackend.SystemGitOnly
+
+  /** Use JGit for explicit git operations such as clone, pull, push, and the
+    * sbt git command.
+    */
+  def useJGitOnlyForOperations: Setting[?] =
+    ThisBuild / gitOperationBackend := GitBackend.JGitOnly
+
+  /** Prefer system git for explicit git operations, falling back to JGit if
+    * system git is unavailable. This is the default.
+    */
+  def useSystemGitFirstForOperations: Setting[?] =
+    ThisBuild / gitOperationBackend := GitBackend.SystemGitFirst
+
   /** A Predefined setting to use JGit runner for git. */
-  def useJGit: Setting[?] = ThisBuild / gitRunner := JGitRunner
+  @deprecated("Use useJGitOnlyForOperations instead.", "2.0.0")
+  def useJGit: Setting[?] = useJGitOnlyForOperations
 
   /** Setting to use console git for readable ops, to allow working with git worktrees */
+  @deprecated("System git is now preferred for reads by default. Use useSystemGitOnlyForReads to force it.", "2.0.0")
   def useReadableConsoleGit: Setting[?] = ThisBuild / useConsoleForROGit := true
 
   /** Adapts the project prompt to show the current project name *and* the current git branch. */
@@ -267,7 +366,9 @@ object SbtGit {
   object git {
     val remoteRepo = GitKeys.gitRemoteRepo
     val branch = GitKeys.gitBranch
+    val readBackend = ThisBuild / GitKeys.gitReadBackend
     val runner = ThisBuild / GitKeys.gitRunner
+    val operationBackend = ThisBuild / GitKeys.gitOperationBackend
     val gitHeadCommit = ThisBuild / GitKeys.gitHeadCommit
     val gitHeadMessage = ThisBuild / GitKeys.gitHeadMessage
     val gitHeadCommitDate = ThisBuild / GitKeys.gitHeadCommitDate
@@ -344,11 +445,21 @@ object GitPlugin extends AutoPlugin {
   // Note: In an attempt to pretend we are binary compatible, we current add this as an after thought.
   // In 1.0, we should deprecate/move the other means of getting these values.
   object autoImport {
+    type GitBackend = com.github.sbt.git.GitBackend
+    val GitBackend = com.github.sbt.git.GitBackend
     val git = SbtGit.git
     def versionWithGit = SbtGit.versionWithGit
     def versionProjectWithGit = SbtGit.versionProjectWithGit
-    def useJGit = SbtGit.useJGit
-    def useReadableConsoleGit = SbtGit.useReadableConsoleGit
+    def useSystemGitOnlyForReads = SbtGit.useSystemGitOnlyForReads
+    def useJGitOnlyForReads = SbtGit.useJGitOnlyForReads
+    def useSystemGitFirstForReads = SbtGit.useSystemGitFirstForReads
+    def useSystemGitOnlyForOperations = SbtGit.useSystemGitOnlyForOperations
+    def useJGitOnlyForOperations = SbtGit.useJGitOnlyForOperations
+    def useSystemGitFirstForOperations = SbtGit.useSystemGitFirstForOperations
+    @deprecated("Use useJGitOnlyForOperations instead.", "2.0.0")
+    def useJGit = SbtGit.useJGitOnlyForOperations
+    @deprecated("System git is now preferred for reads by default. Use useSystemGitOnlyForReads to force it.", "2.0.0")
+    def useReadableConsoleGit = SbtGit.useSystemGitOnlyForReads
     def showCurrentGitBranch = SbtGit.showCurrentGitBranch
   }
   override def buildSettings: Seq[Setting[?]] = SbtGit.buildSettings

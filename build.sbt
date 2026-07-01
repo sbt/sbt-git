@@ -15,8 +15,15 @@ crossScalaVersions := Seq(scala212, scala3)
 enablePlugins(GitVersioning, SbtPlugin)
 git.baseVersion := "1.0"
 
+lazy val jgitVersion = Def.setting {
+  scalaBinaryVersion.value match {
+    case "2.12" => "5.13.5.202508271544-r"
+    case _ => "7.7.0.202606012155-r"
+  }
+}
+
 libraryDependencies ++= Seq(
-  "org.eclipse.jgit" % "org.eclipse.jgit" % "5.13.5.202508271544-r",
+  "org.eclipse.jgit" % "org.eclipse.jgit" % jgitVersion.value,
   "com.michaelpollmeier" % "versionsort" % "1.0.17",
   "org.scalameta" %% "munit" % "1.3.3" % Test
 )

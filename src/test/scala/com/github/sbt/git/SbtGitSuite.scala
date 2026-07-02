@@ -1,7 +1,11 @@
 package com.github.sbt.git
 
 import sbt.ScmInfo
+import sbt.IO
+import sbt.io.syntax.*
 import sbt.url
+
+import scala.sys.process.Process
 
 class SbtGitSuite extends munit.FunSuite {
   val expectedScmInfo = Some(
@@ -54,5 +58,40 @@ class SbtGitSuite extends munit.FunSuite {
     assertEquals(SbtGit.selectGitRunner(GitBackend.SystemGitFirst, systemGitAvailable = false), JGitRunner)
     assertEquals(SbtGit.selectGitRunner(GitBackend.SystemGitOnly, systemGitAvailable = false), ConsoleGitRunner)
     assertEquals(SbtGit.selectGitRunner(GitBackend.JGitOnly, systemGitAvailable = true), JGitRunner)
+  }
+
+  test("console reader handles a repository without commits") {
+    IO.withTemporaryDirectory { dir =>
+      runGit(dir, "init")
+
+      val reader = new ConsoleGitReadableOnly(ConsoleGitRunner, dir, sbt.util.Logger.Null)
+      assert(reader.branch.nonEmpty)
+      assertEquals(reader.headCommitSha, None)
+      assertEquals(reader.currentTags, Seq.empty)
+      assertEquals(reader.headCommitMessage, None)
+    }
+  }
+
+  test("console reader dirty check ignores untracked files") {
+    IO.withTemporaryDirectory { dir =>
+      runGit(dir, "init")
+      runGit(dir, "config", "user.email", "test@example.com")
+      runGit(dir, "config", "user.name", "Tester")
+      IO.write(dir / "README.md", "clean\n")
+      runGit(dir, "add", "README.md")
+      runGit(dir, "commit", "--no-gpg-sign", "-m", "Initial commit")
+
+      val reader = new ConsoleGitReadableOnly(ConsoleGitRunner, dir, sbt.util.Logger.Null)
+      IO.write(dir / "build.sbt", "untracked\n")
+      assertEquals(reader.hasUncommittedChanges, false)
+
+      IO.write(dir / "README.md", "dirty\n")
+      assert(reader.hasUncommittedChanges)
+    }
+  }
+
+  private def runGit(dir: sbt.File, args: String*): Unit = {
+    val exitCode = Process("git" +: args, dir).!
+    assertEquals(exitCode, 0)
   }
 }

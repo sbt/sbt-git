@@ -8,6 +8,9 @@ class ConsoleGitReadableOnly(git: GitRunner, cwd: File, log: Logger) extends Git
   private def splitOutput(output: String): Seq[String] =
     output.split("\\s+").toSeq.filter(_.nonEmpty)
 
+  private def describeArgs(patterns: Seq[String]): Seq[String] =
+    Seq("describe", "--tags") ++ patterns.flatMap(Seq("--match", _))
+
   def branch: String =
     Try(git("symbolic-ref", "--short", "-q", "HEAD")(cwd, log))
       .orElse(Try(git("rev-parse", "--abbrev-ref", "HEAD")(cwd, log)))
@@ -16,7 +19,7 @@ class ConsoleGitReadableOnly(git: GitRunner, cwd: File, log: Logger) extends Git
   def headCommitSha: Option[String] = Try(git("rev-parse", "--verify", "--quiet", "HEAD")(cwd, log)).toOption
 
   def headCommitDate: Option[String] =
-    headCommitSha.flatMap(_ => Try(git("log", """--pretty="%cI"""", "-n", "1")(cwd, log)).toOption)
+    headCommitSha.flatMap(_ => Try(git("log", "--date=format:%Y-%m-%dT%H:%M:%S%z", "--pretty=%cd", "-n", "1")(cwd, log)).toOption)
 
   def currentTags: Seq[String] =
     headCommitSha
@@ -27,17 +30,17 @@ class ConsoleGitReadableOnly(git: GitRunner, cwd: File, log: Logger) extends Git
     headCommitSha.flatMap(_ => Try(splitOutput(git("describe", "--tags")(cwd, log)).headOption).toOption.flatten)
 
   override def describedVersion(patterns: Seq[String]): Option[String] =
-    patterns.headOption.fold(describedVersion)(pat =>
-      headCommitSha.flatMap(_ => Try(splitOutput(git("describe", "--tags", "--match", pat)(cwd, log)).headOption).toOption.flatten)
+    patterns.headOption.fold(describedVersion)(_ =>
+      headCommitSha.flatMap(_ => Try(splitOutput(git(describeArgs(patterns)*)(cwd, log)).headOption).toOption.flatten)
     )
 
   def hasUncommittedChanges: Boolean = Try(!git("status", "-s", "--untracked-files=no")(cwd, log).trim.isEmpty).getOrElse(true)
 
-  def branches: Seq[String] = Try(splitOutput(git("branch", "--list")(cwd, log))).getOrElse(Seq())
+  def branches: Seq[String] = Try(splitOutput(git("branch", "--list", "--format=%(refname:short)")(cwd, log))).getOrElse(Seq())
 
-  def remoteBranches: Seq[String] = Try(splitOutput(git("branch", "-l", "--remotes")(cwd, log))).getOrElse(Seq())
+  def remoteBranches: Seq[String] = Try(splitOutput(git("branch", "--remotes", "--format=%(refname:short)")(cwd, log))).getOrElse(Seq())
 
-  def remoteOrigin: String = git("ls-remote", "--get-url", "origin")(cwd, log)
+  def remoteOrigin: String = Try(git("ls-remote", "--get-url", "origin")(cwd, log)).getOrElse("origin")
 
   def headCommitMessage: Option[String] =
     headCommitSha.flatMap(_ => Try(git("log", "--pretty=%B", "-n", "1")(cwd, log)).toOption)

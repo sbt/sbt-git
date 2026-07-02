@@ -90,6 +90,58 @@ class SbtGitSuite extends munit.FunSuite {
     }
   }
 
+  test("console reader returns undecorated branch names") {
+    IO.withTemporaryDirectory { dir =>
+      initCommittedRepo(dir)
+      runGit(dir, "branch", "feature")
+      runGit(dir, "update-ref", "refs/remotes/origin/main", "HEAD")
+
+      val reader = new ConsoleGitReadableOnly(ConsoleGitRunner, dir, sbt.util.Logger.Null)
+      assert(reader.branches.contains("feature"))
+      assert(!reader.branches.contains("*"))
+      assert(reader.remoteBranches.contains("origin/main"))
+      assert(!reader.remoteBranches.contains("*"))
+    }
+  }
+
+  test("console reader applies all describe match patterns") {
+    IO.withTemporaryDirectory { dir =>
+      initCommittedRepo(dir)
+      runGit(dir, "tag", "release-1.0")
+
+      val reader = new ConsoleGitReadableOnly(ConsoleGitRunner, dir, sbt.util.Logger.Null)
+      assertEquals(reader.describedVersion(Seq("ignored-*", "release-*")), Some("release-1.0"))
+    }
+  }
+
+  test("console reader commit date is not shell quoted") {
+    IO.withTemporaryDirectory { dir =>
+      initCommittedRepo(dir)
+
+      val reader = new ConsoleGitReadableOnly(ConsoleGitRunner, dir, sbt.util.Logger.Null)
+      val date = reader.headCommitDate.getOrElse(fail("expected a commit date"))
+      assert(date.matches("""\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{4}"""))
+    }
+  }
+
+  test("console reader falls back to origin when no origin remote is configured") {
+    IO.withTemporaryDirectory { dir =>
+      initCommittedRepo(dir)
+
+      val reader = new ConsoleGitReadableOnly(ConsoleGitRunner, dir, sbt.util.Logger.Null)
+      assertEquals(reader.remoteOrigin, "origin")
+    }
+  }
+
+  private def initCommittedRepo(dir: sbt.File): Unit = {
+    runGit(dir, "init")
+    runGit(dir, "config", "user.email", "test@example.com")
+    runGit(dir, "config", "user.name", "Tester")
+    IO.write(dir / "README.md", "initial\n")
+    runGit(dir, "add", "README.md")
+    runGit(dir, "commit", "--no-gpg-sign", "-m", "Initial commit")
+  }
+
   private def runGit(dir: sbt.File, args: String*): Unit = {
     val exitCode = Process("git" +: args, dir).!
     assertEquals(exitCode, 0)

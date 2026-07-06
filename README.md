@@ -56,15 +56,16 @@ The following settings control explicit git operations:
 * `useSystemGitOnlyForOperations` - use system git only.
 * `useJGitOnlyForOperations` - use JGit only.
 
-The older `useJGit` and `useReadableConsoleGit` helpers are deprecated aliases
-for command-operation JGit and read-only system git behavior, respectively.
+The older `useJGit` helper remains available and now selects JGit for both
+read-only metadata and explicit git operations. The older
+`useReadableConsoleGit` helper remains available as a compatibility alias for
+forcing read-only metadata to use system git.
 
 These settings can be included in your project's `git.sbt` or in
 `~/.sbt/1.0/git.sbt` -- for example, to force JGit and prevent sbt-git from
 shelling out, either file can have the following contents:
 
-    useJGitOnlyForReads
-    useJGitOnlyForOperations
+    useJGit
 
 Or you can `set` the appropriate setting in the sbt prompt:
 

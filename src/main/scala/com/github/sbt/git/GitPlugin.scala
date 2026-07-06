@@ -272,12 +272,11 @@ object SbtGit {
   def useSystemGitFirstForOperations: Setting[?] =
     ThisBuild / gitOperationBackend := GitBackend.SystemGitFirst
 
-  /** A Predefined setting to use JGit runner for git. */
-  @deprecated("Use useJGitOnlyForOperations instead.", "2.0.0")
-  def useJGit: Setting[?] = useJGitOnlyForOperations
+  /** Predefined settings to use JGit for reads and explicit git operations. */
+  def useJGit: Seq[Setting[?]] =
+    Seq(useJGitOnlyForReads, useJGitOnlyForOperations)
 
   /** Setting to use console git for readable ops, to allow working with git worktrees */
-  @deprecated("System git is now preferred for reads by default. Use useSystemGitOnlyForReads to force it.", "2.0.0")
   def useReadableConsoleGit: Setting[?] = ThisBuild / useConsoleForROGit := true
 
   /** Adapts the project prompt to show the current project name *and* the current git branch. */
@@ -456,10 +455,8 @@ object GitPlugin extends AutoPlugin {
     def useSystemGitOnlyForOperations = SbtGit.useSystemGitOnlyForOperations
     def useJGitOnlyForOperations = SbtGit.useJGitOnlyForOperations
     def useSystemGitFirstForOperations = SbtGit.useSystemGitFirstForOperations
-    @deprecated("Use useJGitOnlyForOperations instead.", "2.0.0")
-    def useJGit = SbtGit.useJGitOnlyForOperations
-    @deprecated("System git is now preferred for reads by default. Use useSystemGitOnlyForReads to force it.", "2.0.0")
-    def useReadableConsoleGit = SbtGit.useSystemGitOnlyForReads
+    def useJGit = SbtGit.useJGit
+    def useReadableConsoleGit = SbtGit.useReadableConsoleGit
     def showCurrentGitBranch = SbtGit.showCurrentGitBranch
   }
   override def buildSettings: Seq[Setting[?]] = SbtGit.buildSettings

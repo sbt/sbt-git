@@ -49,8 +49,14 @@ class SbtGitSuite extends munit.FunSuite {
   }
 
   test("system git availability override takes precedence over detection") {
-    assert(SbtGit.detectedSystemGitAvailable(Some(true), sbt.file("."), sbt.util.Logger.Null))
-    assertEquals(SbtGit.detectedSystemGitAvailable(Some(false), sbt.file("."), sbt.util.Logger.Null), false)
+    assert(SbtGit.detectedSystemGitAvailable(Some(true), sbt.file(".")))
+    assertEquals(SbtGit.detectedSystemGitAvailable(Some(false), sbt.file(".")), false)
+  }
+
+  test("system git readability probe handles non-git directories") {
+    IO.withTemporaryDirectory { dir =>
+      assertEquals(SbtGit.isSystemGitReadable(dir), false)
+    }
   }
 
   test("operation backend selects the expected runner") {

@@ -1,7 +1,5 @@
 package com.github.sbt.git
 
-import scala.util.Try
-
 import sbt.*
 import Keys.*
 
@@ -141,8 +139,8 @@ object SbtGit {
     gitReader := {
       val base = baseDirectory.value
       val log = sLog.value
-      val available = detectedSystemGitAvailable(systemGitAvailableOverride.value, base, log)
-      val readable = available && isSystemGitReadable(base, log)
+      val available = detectedSystemGitAvailable(systemGitAvailableOverride.value, base)
+      val readable = available && isSystemGitReadable(base)
       new DefaultReadableGit(
         base,
         if (useSystemGitForReads(useConsoleForROGit.value, gitReadBackend.value, readable))
@@ -151,7 +149,7 @@ object SbtGit {
       )
     },
     gitRunner := {
-      val available = detectedSystemGitAvailable(systemGitAvailableOverride.value, baseDirectory.value, sLog.value)
+      val available = detectedSystemGitAvailable(systemGitAvailableOverride.value, baseDirectory.value)
       selectGitRunner(gitOperationBackend.value, available)
     },
     gitHeadCommit := gitReader.value.withGit(_.headCommitSha),
@@ -168,14 +166,14 @@ object SbtGit {
     scmInfo := parseScmInfo(gitReader.value.withGit(_.remoteOrigin))
   )
 
-  private[sbt] def isSystemGitAvailable(dir: File, log: Logger): Boolean =
-    Try(ConsoleGitRunner("--version")(dir, log)).isSuccess
+  private[sbt] def isSystemGitAvailable(dir: File): Boolean =
+    ConsoleGitRunner.succeeds("--version")(dir)
 
-  private[sbt] def detectedSystemGitAvailable(overrideValue: Option[Boolean], dir: File, log: Logger): Boolean =
-    overrideValue.getOrElse(isSystemGitAvailable(dir, log))
+  private[sbt] def detectedSystemGitAvailable(overrideValue: Option[Boolean], dir: File): Boolean =
+    overrideValue.getOrElse(isSystemGitAvailable(dir))
 
-  private[sbt] def isSystemGitReadable(dir: File, log: Logger): Boolean =
-    Try(ConsoleGitRunner("rev-parse", "--git-dir")(dir, log)).isSuccess
+  private[sbt] def isSystemGitReadable(dir: File): Boolean =
+    ConsoleGitRunner.succeeds("rev-parse", "--git-dir")(dir)
 
   private[sbt] def useSystemGitForReads(forceSystemGit: Boolean, backend: GitBackend, systemGitAvailable: Boolean): Boolean =
     forceSystemGit || useSystemGit(backend, systemGitAvailable)

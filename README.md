@@ -31,32 +31,45 @@ additionally, use one of the older README.md files: (https://github.com/sbt/sbt-
 
 JGit is a Java interface to git that allows some git operations to be
 performed in the JVM without invoking an external git executable. By default,
-this plugin uses JGit for read-only operations such as inspecting HEAD; for
-write operations, it assumes a git executable is present and on the PATH and
-it uses that.
+this plugin prefers the system `git` executable for both read-only metadata
+such as inspecting HEAD and for explicit git operations such as clone, pull,
+push, and the sbt `git` command. Read-only metadata falls back to JGit if
+system git is not available or cannot read the build's Git metadata. Explicit
+git operations fall back to JGit only when system git is not available.
 
-In certain circumstances you may want to force the use of JGit or an
-executable for both read-only and read-write operations; for example, if no
-git executable is present (e.g. you use windows and you haven't installed git
-or it's not on your PATH) you need to disable the console interface, or if
-you rely on a git feature that JGit does not support (e.g. worktrees) you need
-to disable the JGit interface.
+In certain circumstances you may want deterministic behavior instead of the
+default fallback. For example, CI can force system git so the build fails if
+the executable is missing, while restricted environments can force JGit so the
+plugin never shells out.
 
-The following settings will force the use of only JGit or a git executable,
-respectively:
+The following settings control read-only operations:
 
-* `useJGit`
-* `useReadableConsoleGit`
+* `useSystemGitFirstForReads` - prefer system git and fall back to JGit. This
+  is the default.
+* `useSystemGitOnlyForReads` - use system git only.
+* `useJGitOnlyForReads` - use JGit only.
+
+The following settings control explicit git operations:
+
+* `useSystemGitFirstForOperations` - prefer system git and fall back to JGit.
+  This is the default.
+* `useSystemGitOnlyForOperations` - use system git only.
+* `useJGitOnlyForOperations` - use JGit only.
+
+The older `useJGit` helper remains available and now selects JGit for both
+read-only metadata and explicit git operations. The older
+`useReadableConsoleGit` helper remains available as a compatibility alias for
+forcing read-only metadata to use system git.
 
 These settings can be included in your project's `git.sbt` or in
-`~/.sbt/1.0/git.sbt` -- for example, if no git executable is installed,
-either file can have the following contents:
+`~/.sbt/1.0/git.sbt` -- for example, to force JGit and prevent sbt-git from
+shelling out, either file can have the following contents:
 
     useJGit
 
 Or you can `set` the appropriate setting in the sbt prompt:
 
-    > set useReadableConsoleGit
+    > set useSystemGitOnlyForReads
     [info] Reapplying settings...
     [info] Set current project to scala-arm (in build file:...)
     > session save

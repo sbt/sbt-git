@@ -13,3 +13,16 @@ $ copy-file changes/build.sbt build.sbt
 > git tag v1.2.0
 > reload
 > checkVersion 1.2.0
+> git tag v1.3.0-beta.2
+> git tag v1.3.0-beta.11
+> reload
+> checkVersion 1.3.0-beta.11
+> git tag v1.3.0-beta.2147483648
+> reload
+> checkVersion 1.3.0-beta.2147483648
+> git tag v1.3.0
+> reload
+> checkVersion 1.3.0
+> git tag v1.4.0+build.007
+> reload
+> checkVersion 1.4.0+build.007

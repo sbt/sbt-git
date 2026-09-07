@@ -2,6 +2,7 @@ package com.github.sbt.git
 
 import sbt.*
 import Keys.*
+import com.github.zafarkhaja.semver.Version
 
 /** This plugin has all the basic 'git' functionality for other plugins. */
 object SbtGit {
@@ -318,7 +319,18 @@ object SbtGit {
         } yield version
 
       // NOTE - Selecting the last tag or the first tag should be an option.
-      val highestVersion = versions.sortWith { versionsort.VersionHelper.compare(_, _) > 0 }.headOption
+      // Lenient parsing accepts short versions such as 1.2. Keep the original strings for the result.
+      val parsedVersions = versions.map(v => v -> Version.tryParse(v, false))
+      val highestVersion =
+        if (parsedVersions.forall(_._2.isPresent))
+          parsedVersions
+            .sortWith { case ((_, a), (_, b)) => a.get.compareToIgnoreBuildMetadata(b.get) > 0 }
+            .headOption
+            .map(_._1)
+        else
+          // Custom tag conversions may return non-SemVer versions, such as 1.2.3.4.
+          // Use one ordering for the whole set so that comparisons remain transitive.
+          versions.sortWith { versionsort.VersionHelper.compare(_, _) > 0 }.headOption
       highestVersion.map(_ + suffix)
     }
 

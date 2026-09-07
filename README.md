@@ -78,6 +78,12 @@ The git plugin will now autogenerate your version using the following rules, in 
 
 The `git.baseVersion` setting represents the in-development (upcoming) version you're working on.
 
+When all matching versions can be parsed as SemVer (including short versions such as `1` and `1.2`),
+the highest version is selected using SemVer precedence. Build metadata does not affect precedence;
+the first tag wins when versions have equal precedence. The selected version's original text is preserved.
+If any matching version cannot be parsed this way, the existing `versionsort` ordering is used for all
+matching versions, preserving support for other version formats such as `1.2.3.4`.
+
 You can alter the tag-detection algorithm using the `git.gitTagToVersionNumber` setting. For example, if we wanted to alter the default version tag detection so it does not require a "v" at the start of tags, we could add the following setting:
 
     git.gitTagToVersionNumber := { tag: String =>

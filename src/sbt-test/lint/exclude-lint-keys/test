@@ -1,0 +1,7 @@
+> git init
+> git config user.email "test@jsuereth.com"
+> git config user.name "Tester"
+> git add build.sbt
+> git commit -m "test"
+> lintUnused
+> checkLintUnused

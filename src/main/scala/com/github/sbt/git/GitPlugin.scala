@@ -135,6 +135,40 @@ object SbtGit {
     ThisBuild / gitUncommittedChanges := gitReader.value.withGit(_.hasUncommittedChanges),
     scmInfo := parseScmInfo(gitReader.value.withGit(_.remoteOrigin))
   )
+
+  /** Settings that are added to the `Global` scope by [[GitPlugin]].
+   *
+   * sbt's `lintUnused` check reports settings that no other setting or task consumes. Most of the keys
+   * this plugin defines are exactly that: they are read by the `git` command, by the user's release
+   * process, or only when git versioning is enabled, so sbt cannot see a consumer for them and warns
+   * about the settings this plugin itself contributed. Excluding them keeps builds warning free out of
+   * the box. See https://github.com/sbt/sbt-git/issues/379
+   */
+  def globalSettings: Seq[Setting[?]] = Seq(
+    Global / excludeLintKeys ++= Set[Def.KeyedInitialize[?]](
+      baseVersion,
+      formattedDateVersion,
+      formattedShaVersion,
+      gitBranch,
+      gitCurrentBranch,
+      gitCurrentTags,
+      gitDescribePatterns,
+      gitDescribedVersion,
+      gitHeadCommit,
+      gitHeadCommitDate,
+      gitHeadMessage,
+      gitReader,
+      gitRemoteRepo,
+      gitTagToVersionNumber,
+      gitUncommittedChanges,
+      scmInfo,
+      uncommittedSignifier,
+      useConsoleForROGit,
+      useGitDescribe,
+      versionProperty
+    )
+  )
+
   private[sbt] def parseScmInfo(remoteOrigin: String): Option[ScmInfo] = {
     val user = """(?:[^@\/]+@)?"""
     val domain = """([^\/]+)"""
@@ -351,6 +385,7 @@ object GitPlugin extends AutoPlugin {
     def useReadableConsoleGit = SbtGit.useReadableConsoleGit
     def showCurrentGitBranch = SbtGit.showCurrentGitBranch
   }
+  override def globalSettings: Seq[Setting[?]] = SbtGit.globalSettings
   override def buildSettings: Seq[Setting[?]] = SbtGit.buildSettings
   override def projectSettings: Seq[Setting[?]] = SbtGit.projectSettings
 }

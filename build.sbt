@@ -17,7 +17,7 @@ enablePlugins(SbtPlugin)
 libraryDependencies ++= Seq(
   "org.eclipse.jgit" % "org.eclipse.jgit" % "5.13.5.202508271544-r",
   "com.michaelpollmeier" % "versionsort" % "1.0.17",
-  "org.scalameta" %% "munit" % "1.3.5" % Test
+  "org.scalameta" %% "munit" % "1.3.6" % Test
 )
 
 (pluginCrossBuild / sbtVersion) := {

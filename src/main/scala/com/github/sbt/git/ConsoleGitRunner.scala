@@ -39,6 +39,12 @@ object ConsoleGitRunner extends GitRunner {
       result
   }
 
+  private[sbt] def succeeds(args: String*)(cwd: File): Boolean =
+    Try {
+      IO.createDirectory(cwd)
+      Process(cmd ++ args, cwd, colorSupport*) ! ProcessLogger(_ => (), _ => ())
+    }.toOption.contains(0)
+
   override def toString = "git"
   // reduce log level for git process
   private class GitLogger(log: Logger) extends ProcessLogger {

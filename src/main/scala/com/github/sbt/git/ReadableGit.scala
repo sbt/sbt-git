@@ -30,15 +30,16 @@ trait GitReadonlyInterface {
   def headCommitMessage: Option[String]
 }
 
-/** Our default readable git uses JGit instead of a process-forking and reading, for speed/safety. However, we allow
-  * overriding, since JGit doesn't currently work with git worktrees
-  * */
+/** ReadableGit implementation backed by either the configured override, such
+  * as system git, or JGit as the fallback implementation.
+  */
 final class DefaultReadableGit(base: sbt.File, gitOverride: Option[GitReadonlyInterface]) extends ReadableGit {
   // TODO - Should we cache git, or just create on each request?
   // For now, let's cache.
   private val git = gitOverride getOrElse JGit(base)
   /** Use the git read-only interface. */
   def withGit[A](f: GitReadonlyInterface => A): A =
-    // JGit has concurrency issues so we synchronize access to it.
+    // JGit has concurrency issues, so keep access synchronized even when the
+    // configured backend is not JGit.
     synchronized(f(git))
 }

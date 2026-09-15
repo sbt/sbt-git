@@ -1,0 +1,6 @@
+$ exec ./init.sh
+# Switch to the scripted root's meta-build. That meta-build is the generated
+# project/ directory, which init.sh made a linked Git worktree.
+> reload plugins
+> expectSystemGitFirstBackend
+> expectWorktreeReadableValues

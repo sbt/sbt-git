@@ -16,6 +16,12 @@ jobs:
           - java: 17
             distribution: temurin
             sbt: 2
+          - java: 21
+            distribution: temurin
+            sbt: 2
+          - java: 25
+            distribution: temurin
+            sbt: 2
     runs-on: ubuntu-latest
     env:
       # define Java options for both official sbt and sbt-extras
